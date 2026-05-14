@@ -15,7 +15,7 @@ from google.oauth2.service_account import Credentials
 # 1. CONFIGURAZIONE E COSTANTI
 # ==========================================================
 st.set_page_config(
-    page_title="FV Wash Manager",
+    page_title="FV WASH MANAGER",
     layout="wide",
     page_icon="🧼",
     initial_sidebar_state="expanded",
@@ -47,7 +47,6 @@ st.markdown("""
         box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); margin-bottom: 2rem;
     }
     
-    /* KPI Card Style */
     .kpi-box {
         background: white; padding: 15px; border-radius: 18px; text-align: center;
         border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -58,7 +57,6 @@ st.markdown("""
     .kpi-val { font-size: 24px; font-weight: 800; color: #1e293b; margin: 0; }
     .kpi-lab { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
 
-    /* Box Stato Colorato Dinamico */
     .status-container { padding: 10px; border-radius: 12px; font-weight: 800; text-align: center; margin-bottom: 5px; color: white; }
     .st-da-programmare { background-color: #94a3b8; }
     .st-avvisato { background-color: #3b82f6; }
@@ -126,14 +124,14 @@ if st.session_state.df is None: st.session_state.df = carica_dati()
 df = st.session_state.df
 
 with st.sidebar:
-    st.markdown("### 🧼 FV Wash Manager")
+    st.markdown("### 🧼 FV WASH MANAGER")
     pagina = st.radio("Navigazione", ["Dashboard", "Modelli Messaggi", "Calendario", "Impostazioni"])
     if st.button("🔄 Aggiorna Dati"): st.session_state.df = carica_dati(); st.rerun()
 
 if pagina == "Dashboard":
-    st.markdown('<div class="hero"><h1>Dashboard Operativa</h1><p>Controllo Interventi Platinum+</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero"><h1>FV WASH MANAGER</h1><p>Controllo Operativo Interventi</p></div>', unsafe_allow_html=True)
     
-    # --- KPI DASHBOARD (PULSANTI A LARGHEZZA INTERA) ---
+    # --- KPI DASHBOARD ---
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
         is_act = "kpi-active" if st.session_state.dash_filter == "Tutti" else ""
@@ -162,7 +160,6 @@ if pagina == "Dashboard":
 
     st.divider()
 
-    # --- LOGICA FILTRO ---
     df_view = df.copy()
     if st.session_state.dash_filter == "Confermati": df_view = conf
     elif st.session_state.dash_filter == "Urgenze": df_view = urg
@@ -203,14 +200,14 @@ if pagina == "Dashboard":
             
             c_3, c_4, c_5 = st.columns(3)
             default_date = row["DataLavaggio_DT"] if pd.notna(row["DataLavaggio_DT"]) else date.today()
-            new_date = c_3.date_input("Data Lavaggio", default_date)
+            
+            # --- INPUT DATA FORMATO GG/MM/AAAA ---
+            new_date = c_3.date_input("Data Lavaggio", default_date, format="DD/MM/YYYY")
             new_ora = c_4.text_input("Orario", row["Orario"])
             
-            # --- CASELLA STATO COLORATA ---
             stati_list = ["DA PROGRAMMARE", "AVVISATO CLIENTE", "CONFERMATO DA CLIENTE", "FATTO", "ANNULLATO DAL CLIENTE"]
             current_st = row["Stato"] if row["Stato"] in stati_list else "DA PROGRAMMARE"
             
-            # Mappa classi CSS per lo stato
             st_class = "st-da-programmare"
             if "AVVISATO" in current_st: st_class = "st-avvisato"
             elif "CONFERMATO" in current_st: st_class = "st-confermato"
@@ -231,26 +228,33 @@ if pagina == "Dashboard":
                     st.success("Dati aggiornati!"); st.session_state.df = carica_dati(); st.rerun()
             
             st.divider()
-            # (Resto delle funzioni invio comunicazioni invariate...)
+            
             st.markdown("#### 🚀 Invio Comunicazioni")
             tipo = "3" if (pd.notna(row['GiorniMancanti']) and row['GiorniMancanti'] <= 5) else "30"
             mod = st.session_state.modelli
             data_s = new_date.strftime("%d/%m/%Y")
             def comp(t, r, d, o): return t.replace("[CLIENTE]", r['Cliente']).replace("[DATA]", d).replace("[ORARIO]", o).replace("[IMPIANTO]", r['Impianto'])
+            
             ca, cb = st.columns(2)
             if ca.button(f"✉️ Email {tipo}gg", use_container_width=True):
                 ogg = comp(mod[f"mail_{tipo}_ogg"], row, data_s, new_ora); txt = comp(mod[f"mail_{tipo}_txt"], row, data_s, new_ora)
-                if salva_sheet(st.session_state.selected_idx, {"DataPromemoria" + ("3gg" if tipo=="3" else ""): date.today().strftime("%d/%m/%Y"), "Stato": "AVVISATO CLIENTE"}):
-                    st.markdown(f'<a href="mailto:{new_mail}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}" target="_blank" style="text-decoration:none;"><div style="background:#2563eb;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">APRI EMAIL</div></a>', unsafe_allow_html=True)
+                col_s = "DataPromemoria3gg" if tipo == "3" else "DataPromemoria"
+                if salva_sheet(st.session_state.selected_idx, {col_s: date.today().strftime("%d/%m/%Y"), "Stato": "AVVISATO CLIENTE"}):
+                    url = f"mailto:{new_mail}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}"
+                    st.markdown(f'<a href="{url}" target="_blank" style="text-decoration:none;"><div style="background:#2563eb;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">APRI EMAIL</div></a>', unsafe_allow_html=True)
+
             if cb.button(f"💬 WhatsApp {tipo}gg", use_container_width=True):
-                txt = comp(mod[f"wa_{tipo}_txt"], row, data_s, new_ora); num = "".join(filter(str.isdigit, new_tel))
+                txt = comp(mod[f"wa_{tipo}_txt"], row, data_s, new_ora)
+                num = "".join(filter(str.isdigit, new_tel))
                 if num.startswith("3") and len(num) == 10: num = "39" + num
-                if salva_sheet(st.session_state.selected_idx, {"DataWA" + tipo + "gg": date.today().strftime("%d/%m/%Y"), "Stato": "AVVISATO CLIENTE"}):
-                    st.markdown(f'<a href="https://wa.me/{num}?text={urllib.parse.quote(txt)}" target="_blank" style="text-decoration:none;"><div style="background:#16a34a;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">APRI WHATSAPP</div></a>', unsafe_allow_html=True)
+                col_s = "DataWA3gg" if tipo == "3" else "DataWA30gg"
+                if salva_sheet(st.session_state.selected_idx, {col_s: date.today().strftime("%d/%m/%Y"), "Stato": "AVVISATO CLIENTE"}):
+                    url = f"https://wa.me/{num}?text={urllib.parse.quote(txt)}"
+                    st.markdown(f'<a href="{url}" target="_blank" style="text-decoration:none;"><div style="background:#16a34a;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">APRI WHATSAPP</div></a>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================================
-# 5. ALTRE PAGINE (Invariate)
+# 5. MODELLI MESSAGGI
 # ==========================================================
 elif pagina == "Modelli Messaggi":
     st.markdown("## 📝 Personalizzazione Messaggi")
@@ -279,7 +283,7 @@ elif pagina == "Calendario":
         for i, r in conf.iterrows(): ics += f"BEGIN:VEVENT\nSUMMARY:Lavaggio {r['Cliente']}\nDTSTART:{str(r['DataLavaggio_DT']).replace('-','')}T080000\nEND:VEVENT\n"
         ics += "END:VCALENDAR"
         st.download_button("Scarica .ics", ics, "nuovi_lavaggi.ics", on_click=lambda: [salva_sheet(i, {"EventoCalendarioCreato":"SI"}) for i in conf.index])
-    else: st.info("Nessun nuovo evento.")
+    else: st.info("Tutto aggiornato.")
 
 elif pagina == "Impostazioni":
     st.markdown("## ⚙️ Diagnostica")
