@@ -15,7 +15,7 @@ from google.oauth2.service_account import Credentials
 # 1. CONFIGURAZIONE E COSTANTI
 # ==========================================================
 st.set_page_config(
-    page_title="FV Wash Manager Platinum+",
+    page_title="FV Wash Manager",
     layout="wide",
     page_icon="🧼",
     initial_sidebar_state="expanded",
