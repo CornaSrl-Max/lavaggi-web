@@ -194,26 +194,30 @@ is_read_only = not st.session_state.autenticato
 if pagina == "Dashboard":
     st.markdown('<div class="hero"><h1>FV WASH MANAGER</h1><p>Controllo Operativo Interventi</p></div>', unsafe_allow_html=True)
     
- # Filtri KPI
-    # "Tutti" viene ordinato alfabeticamente per Cliente
+# --- LOGICA FILTRI KPI ---
+    # 1. Tutti: Ordine alfabetico per Cliente
     df_tutti = df.sort_values(by="Cliente")
     
-    # Gli altri filtri vengono ordinati per DataLavaggio_DT (cronologico)
+    # 2. Confermati: Ordine cronologico per data
     df_conf = df[df["Stato"].str.upper() == "CONFERMATO DA CLIENTE"].sort_values(by="DataLavaggio_DT", na_position="last")
     
+    # 3. Urgenze: Prossimi 15gg (non confermati/fatti), ordine cronologico
     df_urg = df[
         (df["GiorniMancanti"].between(0, 15)) & 
         (df["Stato"].str.upper() != "CONFERMATO DA CLIENTE") & 
         (df["Stato"].str.upper() != "FATTO")
     ].sort_values(by="DataLavaggio_DT", na_position="last")
     
+    # 4. Completati (Stato: FATTO): Ordine cronologico
     df_comp = df[df["Stato"].str.upper() == "FATTO"].sort_values(by="DataLavaggio_DT", na_position="last")
     
+    # 5. Da Fare: Non Fatti e Non Annullati, ORDINE CRONOLOGICO
     df_da_fare = df[
         (df["Stato"].str.upper() != "FATTO") & 
         (df["Stato"].str.upper() != "ANNULLATO DA CLIENTE")
     ].sort_values(by="DataLavaggio_DT", na_position="last")
     
+    # 6. Annullati: Ordine cronologico
     df_annullati = df[df["Stato"].str.upper() == "ANNULLATO DA CLIENTE"].sort_values(by="DataLavaggio_DT", na_position="last")
 
     k_cols = st.columns(6)
