@@ -194,13 +194,27 @@ is_read_only = not st.session_state.autenticato
 if pagina == "Dashboard":
     st.markdown('<div class="hero"><h1>FV WASH MANAGER</h1><p>Controllo Operativo Interventi</p></div>', unsafe_allow_html=True)
     
-    # Filtri KPI
+ # Filtri KPI
+    # "Tutti" viene ordinato alfabeticamente per Cliente
     df_tutti = df.sort_values(by="Cliente")
-    df_conf = df[df["Stato"].str.upper() == "CONFERMATO DA CLIENTE"]
-    df_urg = df[(df["GiorniMancanti"].between(0, 15)) & (df["Stato"].str.upper() != "CONFERMATO DA CLIENTE") & (df["Stato"].str.upper() != "FATTO")]
-    df_comp = df[df["Stato"].str.upper() == "FATTO"]
-    df_da_fare = df[(df["Stato"].str.upper() != "FATTO") & (df["Stato"].str.upper() != "ANNULLATO DA CLIENTE")]
-    df_annullati = df[df["Stato"].str.upper() == "ANNULLATO DA CLIENTE"]
+    
+    # Gli altri filtri vengono ordinati per DataLavaggio_DT (cronologico)
+    df_conf = df[df["Stato"].str.upper() == "CONFERMATO DA CLIENTE"].sort_values(by="DataLavaggio_DT", na_position="last")
+    
+    df_urg = df[
+        (df["GiorniMancanti"].between(0, 15)) & 
+        (df["Stato"].str.upper() != "CONFERMATO DA CLIENTE") & 
+        (df["Stato"].str.upper() != "FATTO")
+    ].sort_values(by="DataLavaggio_DT", na_position="last")
+    
+    df_comp = df[df["Stato"].str.upper() == "FATTO"].sort_values(by="DataLavaggio_DT", na_position="last")
+    
+    df_da_fare = df[
+        (df["Stato"].str.upper() != "FATTO") & 
+        (df["Stato"].str.upper() != "ANNULLATO DA CLIENTE")
+    ].sort_values(by="DataLavaggio_DT", na_position="last")
+    
+    df_annullati = df[df["Stato"].str.upper() == "ANNULLATO DA CLIENTE"].sort_values(by="DataLavaggio_DT", na_position="last")
 
     k_cols = st.columns(6)
     kpis = [("Tutti", "📋", len(df_tutti)), ("Confermati", "👍", len(df_conf)), ("Urgenze", "🔥", len(df_urg)), 
