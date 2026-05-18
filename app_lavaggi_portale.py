@@ -544,9 +544,29 @@ if pagina == "Dashboard":
         if st.session_state.selected_idx is not None:
             row = df.loc[st.session_state.selected_idx]
             st.markdown(
-                f'<div class="card"><h2>{row["Cliente"]}</h2>',
+                f'<div class="card"><h2 style="margin-top:0;">{row["Cliente"]}</h2>',
                 unsafe_allow_html=True,
             )
+            
+            # --- INIZIO BLOCCO RIPRISTINATO: STORICO INVII ---
+            st.markdown("#### 📡 Storico Invii Promemoria")
+            i1, i2, i3, i4 = st.columns(4)
+            
+            def val_invio(v):
+                return str(v).strip() if pd.notna(v) and str(v).strip() else "—"
+                
+            box_style = "background:#f8fafc; padding:12px 8px; border-radius:12px; border:1px solid #e2e8f0; text-align:center; line-height:1.4;"
+            lbl_style = "font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase;"
+            val_style = "font-size:14px; font-weight:800; color:#0f172a;"
+            
+            i1.markdown(f"<div style='{box_style}'><span style='{lbl_style}'>Mail 30gg</span><br/><span style='{val_style}'>{val_invio(row['DataPromemoria'])}</span></div>", unsafe_allow_html=True)
+            i2.markdown(f"<div style='{box_style}'><span style='{lbl_style}'>WA 30gg</span><br/><span style='{val_style}'>{val_invio(row['DataWA30gg'])}</span></div>", unsafe_allow_html=True)
+            i3.markdown(f"<div style='{box_style}'><span style='{lbl_style}'>Mail 3gg</span><br/><span style='{val_style}'>{val_invio(row['DataPromemoria3gg'])}</span></div>", unsafe_allow_html=True)
+            i4.markdown(f"<div style='{box_style}'><span style='{lbl_style}'>WA 3gg</span><br/><span style='{val_style}'>{val_invio(row['DataWA3gg'])}</span></div>", unsafe_allow_html=True)
+            
+            st.write("")
+            # --- FINE BLOCCO STORICO INVII ---
+
             c1, c2 = st.columns(2)
             n_cl = c1.text_input(
                 "Nome Cliente",
@@ -755,7 +775,8 @@ if pagina == "Dashboard":
                     f'<a href="mailto:{mod["mail_fornitore"]}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}" target="_blank" style="text-decoration:none;"><div style="background:#475569;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">AVVISA FORNITORE</div></a>',
                     unsafe_allow_html=True,
                 )
-
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 # ==========================================================
 # 9. FORNITORI
 # ==========================================================
