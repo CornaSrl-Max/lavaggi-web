@@ -307,14 +307,14 @@ with st.sidebar:
 ruolo = st.session_state.ruolo
 is_guest = ruolo == "guest"
 is_user = ruolo == "user"
-is_manager = ruolo == "supervisor"  
+is_supervisor = ruolo == "supervisor"  # <-- ECCO LA RIGA CHE MANCAVA
 is_admin = ruolo == "admin"
 
-# Chi può fare cosa:
+# Definizione di chi può fare cosa:
 can_edit_client = is_user or is_supervisor or is_admin
 can_send_comms = is_user or is_supervisor or is_admin
-can_edit_settings = is_manager or is_admin  # Il supervisor può modificare i modelli email/WA
-can_manage_users = is_admin                 # SOLO l'admin può gestire le password
+can_edit_settings = is_supervisor or is_admin  # Il supervisor e l'admin possono modificare i modelli
+can_manage_users = is_admin                    # SOLO l'admin può gestire le password e i ruoli
 
 # ==========================================================
 # 7. CARICAMENTO DATI
