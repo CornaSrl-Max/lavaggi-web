@@ -6,7 +6,7 @@ import urllib.parse
 from datetime import date, datetime
 from pathlib import Path
 
-import bcrypt
+import bcrypt as bcrypt
 import gspread
 import pandas as pd
 import streamlit as st
