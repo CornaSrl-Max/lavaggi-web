@@ -6,7 +6,7 @@ import urllib.parse
 from datetime import date, datetime
 from pathlib import Path
 
-import bcrypt as bcrypt
+from passlib.hash import bcrypt
 import gspread
 import pandas as pd
 import streamlit as st
@@ -52,12 +52,10 @@ if "selected_idx" not in st.session_state:
 # 2. FUNZIONI AUTENTICAZIONE / UTENTI
 # ==========================================================
 def hash_pw(pw: str) -> str:
-    return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
-
+    return bcrypt.hash(pw)
 
 def check_pw(pw: str, hashed: str) -> bool:
-    try:
-        return bcrypt.checkpw(pw.encode(), hashed.encode())
+    return bcrypt.verify(pw, hashed)
     except Exception:
         return False
 
