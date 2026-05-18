@@ -307,12 +307,14 @@ with st.sidebar:
 ruolo = st.session_state.ruolo
 is_guest = ruolo == "guest"
 is_user = ruolo == "user"
+is_manager = ruolo == "supervisor"  
 is_admin = ruolo == "admin"
 
-can_edit_client = is_user or is_admin
-can_send_comms = is_user or is_admin
-#is_admin = True # Forza il ruolo di admin temporaneamente
-can_edit_settings = is_admin
+# Chi può fare cosa:
+can_edit_client = is_user or is_supervisor or is_admin
+can_send_comms = is_user or is_supervisor or is_admin
+can_edit_settings = is_manager or is_admin  # Il supervisor può modificare i modelli email/WA
+can_manage_users = is_admin                 # SOLO l'admin può gestire le password
 
 # ==========================================================
 # 7. CARICAMENTO DATI
@@ -852,7 +854,8 @@ elif pagina == "Gestione Utenti":
 
     new_user = st.text_input("Username")
     new_pw = st.text_input("Password", type="password")
-    new_role = st.selectbox("Ruolo", ["user", "admin"])
+    # Aggiunto "supervisor" al menu a tendina
+    new_role = st.selectbox("Ruolo", ["user", "supervisor", "admin"])
 
     if st.button("Crea utente"):
         if not new_user:
@@ -871,7 +874,8 @@ elif pagina == "Gestione Utenti":
 
     if not utenti.empty:
         sel_user = st.selectbox("Seleziona utente", utenti.index)
-        new_role2 = st.selectbox("Nuovo ruolo", ["user", "admin"], key="role_edit")
+        # Aggiunto "supervisor" al menu a tendina
+        new_role2 = st.selectbox("Nuovo ruolo", ["user", "supervisor", "admin"], key="role_edit")
 
         if st.button("Aggiorna ruolo"):
             row_idx = utenti.index.get_loc(sel_user) + 2
