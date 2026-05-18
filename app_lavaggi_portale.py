@@ -39,7 +39,7 @@ if "loggato" not in st.session_state:
 if "utente" not in st.session_state:
     st.session_state.utente = None
 if "ruolo" not in st.session_state:
-    st.session_state.ruolo = "guest"  # guest, user, admin
+    st.session_state.ruolo = "guest"  # guest, user, supervisor, admin
 
 if "df" not in st.session_state:
     st.session_state.df = None
@@ -49,11 +49,10 @@ if "selected_idx" not in st.session_state:
     st.session_state.selected_idx = None
 
 # ==========================================================
-# 2. FUNZIONI AUTENTICAZIONE / UTENTI
+# 2. FUNZIONI AUTENTICAZIONE, UTENTI E LOG
 # ==========================================================
 def hash_pw(pw: str) -> str:
     return bcrypt.hash(pw)
-
 
 def check_pw(pw: str, hashed: str) -> bool:
     try:
@@ -61,14 +60,12 @@ def check_pw(pw: str, hashed: str) -> bool:
     except Exception:
         return False
 
-
 @st.cache_resource(show_spinner=False)
 def get_ws():
     creds = Credentials.from_service_account_info(
         dict(st.secrets["gcp_service_account"]), scopes=SCOPES
     )
     return gspread.authorize(creds).open_by_key(SHEET_ID).worksheet(FOGLIO)
-
 
 @st.cache_resource(show_spinner=False)
 def get_ws_utenti():
@@ -79,6 +76,32 @@ def get_ws_utenti():
         UTENTI_SHEET_NAME
     )
 
+@st.cache_resource(show_spinner=False)
+def get_ws_log():
+    creds = Credentials.from_service_account_info(
+        dict(st.secrets["gcp_service_account"]), scopes=SCOPES
+    )
+    return gspread.authorize(creds).open_by_key(SHEET_ID).worksheet("LogAttivita")
+
+def get_user_ip():
+    """Recupera l'IP del client dalle intestazioni di rete di Streamlit"""
+    try:
+        from streamlit import context
+        ip_header = context.headers.get("X-Forwarded-For", "IP Sconosciuto")
+        return ip_header.split(",")[0].strip()
+    except Exception:
+        return "IP Sconosciuto"
+
+def registra_log(azione: str, dettagli: str = ""):
+    """Registra l'azione effettuata nel foglio LogAttivita"""
+    utente = st.session_state.get("utente") or "Guest"
+    ora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    ip_utente = get_user_ip()
+    try:
+        ws_log = get_ws_log()
+        ws_log.append_row([ora, utente, ip_utente, azione, str(dettagli)])
+    except Exception:
+        pass  # In caso di errore nel log, l'app non si blocca
 
 @st.cache_data(show_spinner=False)
 def carica_utenti():
@@ -94,7 +117,6 @@ def carica_utenti():
     except Exception as e:
         st.error(f"Errore caricamento utenti: {e}")
         return pd.DataFrame()
-
 
 def login(username: str, password: str):
     utenti = carica_utenti()
@@ -113,10 +135,15 @@ def login(username: str, password: str):
     st.session_state.utente = username
     st.session_state.ruolo = row["ruolo"]
     st.success(f"Accesso eseguito come {username} ({row['ruolo']})")
+    
+    # Registrazione Log
+    registra_log("Login", f"Accesso effettuato con ruolo: {row['ruolo']}")
     st.rerun()
 
-
 def logout():
+    # Registrazione Log
+    registra_log("Logout", "Disconnessione effettuata")
+    
     st.session_state.loggato = False
     st.session_state.utente = None
     st.session_state.ruolo = "guest"
@@ -211,7 +238,6 @@ def carica_dati():
         st.error(f"Errore caricamento: {e}")
         return None
 
-
 def salva_sheet(idx, mappa):
     if st.session_state.get("ruolo", "guest") == "guest":
         return False
@@ -234,10 +260,11 @@ def salva_sheet(idx, mappa):
                 )
         if updates:
             ws.batch_update(updates, value_input_option="USER_ENTERED")
+            # Registra la modifica nei log
+            registra_log("Modifica Impianto", f"Riga {idx+2} aggiornata: {mappa}")
         return True
     except:
         return False
-
 
 def carica_modelli():
     d = {
@@ -260,12 +287,11 @@ def carica_modelli():
             st.warning("File modelli corrotto, ripristinati valori di default.")
     return d
 
-
 if "modelli" not in st.session_state:
     st.session_state.modelli = carica_modelli()
 
 # ==========================================================
-# 5. SIDEBAR
+# 5. SIDEBAR E NAVIGAZIONE
 # ==========================================================
 with st.sidebar:
     st.markdown("### 🧼 FV WASH MANAGER")
@@ -284,17 +310,21 @@ with st.sidebar:
             logout()
 
     st.divider()
-    pagina = st.radio(
-        "Navigazione",
-        [
-            "Dashboard",
-            "Modelli Messaggi",
-            "Fornitori",
-            "Calendario",
-            "Gestione Utenti",
-            "Impostazioni",
-        ],
-    )
+    
+    # Creazione della lista delle pagine, inclusa Log di Sistema se l'utente è Admin
+    lista_pagine = [
+        "Dashboard",
+        "Modelli Messaggi",
+        "Fornitori",
+        "Calendario",
+    ]
+    if st.session_state.ruolo == "admin":
+        lista_pagine.append("Log di Sistema")
+        lista_pagine.append("Gestione Utenti")
+    
+    lista_pagine.append("Impostazioni")
+
+    pagina = st.radio("Navigazione", lista_pagine)
     st.divider()
     st.link_button("📊 Apri Google Sheet", SHEET_URL, use_container_width=True)
     if st.button("🔄 Aggiorna Dati"):
@@ -307,14 +337,14 @@ with st.sidebar:
 ruolo = st.session_state.ruolo
 is_guest = ruolo == "guest"
 is_user = ruolo == "user"
-is_supervisor = ruolo == "supervisor"  # <-- ECCO LA RIGA CHE MANCAVA
+is_supervisor = ruolo == "supervisor"
 is_admin = ruolo == "admin"
 
 # Definizione di chi può fare cosa:
 can_edit_client = is_user or is_supervisor or is_admin
 can_send_comms = is_user or is_supervisor or is_admin
-can_edit_settings = is_supervisor or is_admin  # Il supervisor e l'admin possono modificare i modelli
-can_manage_users = is_admin                    # SOLO l'admin può gestire le password e i ruoli
+can_edit_settings = is_supervisor or is_admin  # Supervisor e Admin
+can_manage_users = is_admin                    # Solo Admin
 
 # ==========================================================
 # 7. CARICAMENTO DATI
@@ -671,6 +701,7 @@ if pagina == "Dashboard":
                         "Stato": "AVVISATO CLIENTE",
                     },
                 ):
+                    registra_log("Invio Email", f"Inviato preavviso {tipo}gg a {row['Cliente']}")
                     st.markdown(
                         f'<a href="mailto:{n_ml}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}" target="_blank" style="text-decoration:none;"><div style="background:#2563eb;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">APRI EMAIL</div></a>',
                         unsafe_allow_html=True,
@@ -696,6 +727,7 @@ if pagina == "Dashboard":
                         "Stato": "AVVISATO CLIENTE",
                     },
                 ):
+                    registra_log("Invio WhatsApp", f"Inviato preavviso {tipo}gg a {row['Cliente']}")
                     url = f"https://wa.me/{num}?text={urllib.parse.quote(txt)}"
                     st.markdown(
                         f'<a href="{url}" target="_blank" style="text-decoration:none;"><div style="background:#16a34a;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">APRI WHATSAPP</div></a>',
@@ -718,6 +750,7 @@ if pagina == "Dashboard":
                     n_dt.strftime("%d/%m/%Y"),
                     n_or,
                 )
+                registra_log("Invio Fornitore", f"Generata mail fornitore per impianto {row['Cliente']}")
                 st.markdown(
                     f'<a href="mailto:{mod["mail_fornitore"]}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}" target="_blank" style="text-decoration:none;"><div style="background:#475569;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">AVVISA FORNITORE</div></a>',
                     unsafe_allow_html=True,
@@ -736,6 +769,7 @@ elif pagina == "Fornitori":
                 f"- {r['DataLavaggio']} | {r['Cliente']} | {r['Impianto']}\n"
             )
         st.code(txt)
+        registra_log("Riepilogo Fornitori", "Generato riepilogo globale lavaggi confermati")
         st.markdown(
             f'<a href="mailto:{st.session_state.modelli["mail_fornitore"]}?subject=Riepilogo Lavaggi&body={urllib.parse.quote(txt)}" target="_blank" style="background:#1e293b;color:white;padding:10px;border-radius:10px;text-decoration:none;">Invia per Email</a>',
             unsafe_allow_html=True,
@@ -747,7 +781,7 @@ elif pagina == "Fornitori":
 elif pagina == "Modelli Messaggi":
     if not can_edit_settings:
         st.warning(
-            "Accesso in sola lettura. Solo l'amministratore può modificare i modelli."
+            "Accesso in sola lettura. Solo manager e admin possono modificare i modelli."
         )
         is_read_only = True
     else:
@@ -801,6 +835,7 @@ elif pagina == "Modelli Messaggi":
     ):
         with open(FILE_MODELLI, "w", encoding="utf-8") as f:
             json.dump(mod, f, indent=4)
+        registra_log("Modifica Modelli", "Salvati nuovi testi per le comunicazioni")
         st.success("Modelli salvati!")
 
 # ==========================================================
@@ -828,7 +863,7 @@ elif pagina == "Calendario":
             "nuovi.ics",
             disabled=is_guest,
             on_click=lambda: [
-                salva_sheet(i, {"EventoCalendarioCreato": "SI"})
+                (salva_sheet(i, {"EventoCalendarioCreato": "SI"}), registra_log("Calendario", f"Generato evento per {df.loc[i, 'Cliente']}"))
                 for i in conf.index
             ],
         )
@@ -854,7 +889,6 @@ elif pagina == "Gestione Utenti":
 
     new_user = st.text_input("Username")
     new_pw = st.text_input("Password", type="password")
-    # Aggiunto "supervisor" al menu a tendina
     new_role = st.selectbox("Ruolo", ["user", "supervisor", "admin"])
 
     if st.button("Crea utente"):
@@ -865,6 +899,7 @@ elif pagina == "Gestione Utenti":
         else:
             hashed = hash_pw(new_pw)
             ws_u.append_row([new_user, hashed, new_role])
+            registra_log("Nuovo Utente", f"Creato utente {new_user} come {new_role}")
             st.success("Utente creato.")
             st.cache_data.clear()
             st.rerun()
@@ -874,12 +909,12 @@ elif pagina == "Gestione Utenti":
 
     if not utenti.empty:
         sel_user = st.selectbox("Seleziona utente", utenti.index)
-        # Aggiunto "supervisor" al menu a tendina
         new_role2 = st.selectbox("Nuovo ruolo", ["user", "supervisor", "admin"], key="role_edit")
 
         if st.button("Aggiorna ruolo"):
             row_idx = utenti.index.get_loc(sel_user) + 2
             ws_u.update_cell(row_idx, 3, new_role2)
+            registra_log("Modifica Ruolo", f"Cambiato ruolo di {sel_user} in {new_role2}")
             st.success("Ruolo aggiornato.")
             st.cache_data.clear()
             st.rerun()
@@ -899,6 +934,7 @@ elif pagina == "Gestione Utenti":
             hashed = hash_pw(new_pw_reset)
             row_idx = utenti.index.get_loc(reset_user) + 2
             ws_u.update_cell(row_idx, 2, hashed)
+            registra_log("Reset Password", f"Reimpostata password di {reset_user}")
             st.success("Password aggiornata.")
             st.cache_data.clear()
             st.rerun()
@@ -916,12 +952,38 @@ elif pagina == "Gestione Utenti":
             st.code(hash_pw(pw_gen))
 
 # ==========================================================
-# 13. IMPOSTAZIONI
+# 13. LOG DI SISTEMA
+# ==========================================================
+elif pagina == "Log di Sistema":
+    if not is_admin:
+        st.warning("Accesso riservato all'amministratore.")
+        st.stop()
+        
+    st.markdown("## 🕵️ Log di Sistema")
+    st.info("Monitoraggio in tempo reale di tutte le attività (Login, Modifiche, Invii).")
+    
+    try:
+        ws_log = get_ws_log()
+        log_data = ws_log.get_all_records()
+        if log_data:
+            df_log = pd.DataFrame(log_data)
+            # Mostra gli ultimi eventi per primi (invertendo l'ordine)
+            st.dataframe(df_log.iloc[::-1], use_container_width=True, height=600)
+        else:
+            st.info("Nessuna attività registrata finora.")
+            
+        if st.button("🔄 Aggiorna Log"):
+            st.rerun()
+    except Exception as e:
+        st.error(f"Errore caricamento log (assicurati di aver creato il foglio 'LogAttivita'): {e}")
+
+# ==========================================================
+# 14. IMPOSTAZIONI
 # ==========================================================
 elif pagina == "Impostazioni":
     if not can_edit_settings:
-        st.warning("Accesso riservato all'amministratore.")
+        st.warning("Accesso in lettura. Solo manager e admin possono vedere le impostazioni.")
         st.stop()
     st.markdown("## ⚙️ Diagnostica Sistema")
-    st.write(f"Google Sheet: {FOGLIO}")
+    st.write(f"Google Sheet Operativo: {FOGLIO}")
     st.dataframe(df)
