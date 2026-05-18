@@ -291,7 +291,7 @@ if "modelli" not in st.session_state:
     st.session_state.modelli = carica_modelli()
 
 # ==========================================================
-# 5. SIDEBAR E NAVIGAZIONE
+# 5. SIDEBAR E NAVIGAZIONE (Modificata per Link GSheet protetto)
 # ==========================================================
 with st.sidebar:
     st.markdown("### 🧼 FV WASH MANAGER")
@@ -311,7 +311,7 @@ with st.sidebar:
 
     st.divider()
     
-    # Creazione della lista delle pagine, inclusa Log di Sistema se l'utente è Admin
+    # Lista pagine dinamica
     lista_pagine = [
         "Dashboard",
         "Modelli Messaggi",
@@ -326,11 +326,16 @@ with st.sidebar:
 
     pagina = st.radio("Navigazione", lista_pagine)
     st.divider()
-    st.link_button("📊 Apri Google Sheet", SHEET_URL, use_container_width=True)
+
+    # --- MODIFICA RICHIESTA: Link visibile solo all'Admin ---
+    if st.session_state.ruolo == "admin":
+        st.link_button("📊 Apri Google Sheet", SHEET_URL, use_container_width=True)
+        st.write("") # Piccolo spazio estetico
+    # -------------------------------------------------------
+
     if st.button("🔄 Aggiorna Dati"):
         st.session_state.df = carica_dati()
         st.rerun()
-
 # ==========================================================
 # 6. PERMESSI
 # ==========================================================
