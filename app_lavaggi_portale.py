@@ -311,8 +311,8 @@ is_admin = ruolo == "admin"
 
 can_edit_client = is_user or is_admin
 can_send_comms = is_user or is_admin
-is_admin = True # Forza il ruolo di admin temporaneamente
-#can_edit_settings = is_admin
+#is_admin = True # Forza il ruolo di admin temporaneamente
+can_edit_settings = is_admin
 
 # ==========================================================
 # 7. CARICAMENTO DATI
