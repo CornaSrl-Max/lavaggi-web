@@ -13,15 +13,6 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 
 # ==========================================================
-# 0. GENERATORE HASH PASSWORD
-# ==========================================================
-st.write("Generatore Hash Password")
-pw = st.text_input("Inserisci password da convertire", type="password")
-if st.button("Genera Hash"):
-    st.code(hash_pw(pw))
-
-
-# ==========================================================
 # 1. CONFIGURAZIONE E ACCESSO
 # ==========================================================
 st.set_page_config(
@@ -130,7 +121,6 @@ def logout():
     st.session_state.utente = None
     st.session_state.ruolo = "guest"
     st.rerun()
-
 
 # ==========================================================
 # 3. STILE CSS
@@ -295,10 +285,16 @@ with st.sidebar:
             logout()
 
     st.divider()
- pagina = st.radio(
-    "Navigazione",
-    ["Dashboard", "Modelli Messaggi", "Fornitori", "Calendario", "Gestione Utenti", "Impostazioni"]
-)
+    pagina = st.radio(
+        "Navigazione",
+        [
+            "Dashboard",
+            "Modelli Messaggi",
+            "Fornitori",
+            "Calendario",
+            "Gestione Utenti",
+            "Impostazioni",
+        ],
     )
     st.divider()
     st.link_button("📊 Apri Google Sheet", SHEET_URL, use_container_width=True)
@@ -824,12 +820,13 @@ elif pagina == "Calendario":
             "Scarica .ics",
             ics,
             "nuovi.ics",
-            disabled=is_guest,  # solo user/admin scaricano e marcano come creato
+            disabled=is_guest,
             on_click=lambda: [
                 salva_sheet(i, {"EventoCalendarioCreato": "SI"})
                 for i in conf.index
             ],
         )
+
 elif pagina == "Gestione Utenti":
     if not is_admin:
         st.warning("Accesso riservato all'amministratore.")
@@ -851,7 +848,9 @@ elif pagina == "Gestione Utenti":
     new_role = st.selectbox("Ruolo", ["user", "admin"])
 
     if st.button("Crea utente"):
-        if new_user in utenti.index:
+        if not new_user:
+            st.error("Inserisci uno username.")
+        elif new_user in utenti.index:
             st.error("Utente già esistente.")
         else:
             hashed = hash_pw(new_pw)
@@ -863,29 +862,47 @@ elif pagina == "Gestione Utenti":
     st.divider()
     st.markdown("### 🔧 Modifica ruolo utente")
 
-    sel_user = st.selectbox("Seleziona utente", utenti.index)
-    new_role2 = st.selectbox("Nuovo ruolo", ["user", "admin"])
+    if not utenti.empty:
+        sel_user = st.selectbox("Seleziona utente", utenti.index)
+        new_role2 = st.selectbox("Nuovo ruolo", ["user", "admin"], key="role_edit")
 
-    if st.button("Aggiorna ruolo"):
-        row = utenti.index.get_loc(sel_user) + 2
-        ws_u.update_cell(row, 3, new_role2)
-        st.success("Ruolo aggiornato.")
-        st.cache_data.clear()
-        st.rerun()
+        if st.button("Aggiorna ruolo"):
+            row_idx = utenti.index.get_loc(sel_user) + 2
+            ws_u.update_cell(row_idx, 3, new_role2)
+            st.success("Ruolo aggiornato.")
+            st.cache_data.clear()
+            st.rerun()
 
     st.divider()
     st.markdown("### 🔑 Reset password")
 
-    reset_user = st.selectbox("Utente da resettare", utenti.index, key="reset_user")
-    new_pw_reset = st.text_input("Nuova password", type="password", key="reset_pw")
+    if not utenti.empty:
+        reset_user = st.selectbox(
+            "Utente da resettare", utenti.index, key="reset_user"
+        )
+        new_pw_reset = st.text_input(
+            "Nuova password", type="password", key="reset_pw"
+        )
 
-    if st.button("Reset password"):
-        hashed = hash_pw(new_pw_reset)
-        row = utenti.index.get_loc(reset_user) + 2
-        ws_u.update_cell(row, 2, hashed)
-        st.success("Password aggiornata.")
-        st.cache_data.clear()
-        st.rerun()
+        if st.button("Reset password"):
+            hashed = hash_pw(new_pw_reset)
+            row_idx = utenti.index.get_loc(reset_user) + 2
+            ws_u.update_cell(row_idx, 2, hashed)
+            st.success("Password aggiornata.")
+            st.cache_data.clear()
+            st.rerun()
+
+    st.divider()
+    st.markdown("### 🧪 Generatore Hash Password (solo admin)")
+
+    pw_gen = st.text_input(
+        "Inserisci password da convertire in hash", type="password", key="pw_gen"
+    )
+    if st.button("Genera Hash"):
+        if not pw_gen:
+            st.error("Inserisci una password.")
+        else:
+            st.code(hash_pw(pw_gen))
 
 elif pagina == "Impostazioni":
     if not can_edit_settings:
