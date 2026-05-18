@@ -13,6 +13,15 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 
 # ==========================================================
+# 0. GENERATORE HASH PASSWORD
+# ==========================================================
+st.write("Generatore Hash Password")
+pw = st.text_input("Inserisci password da convertire", type="password")
+if st.button("Genera Hash"):
+    st.code(hash_pw(pw))
+
+
+# ==========================================================
 # 1. CONFIGURAZIONE E ACCESSO
 # ==========================================================
 st.set_page_config(
@@ -286,9 +295,10 @@ with st.sidebar:
             logout()
 
     st.divider()
-    pagina = st.radio(
-        "Navigazione",
-        ["Dashboard", "Modelli Messaggi", "Fornitori", "Calendario", "Impostazioni"],
+ pagina = st.radio(
+    "Navigazione",
+    ["Dashboard", "Modelli Messaggi", "Fornitori", "Calendario", "Gestione Utenti", "Impostazioni"]
+)
     )
     st.divider()
     st.link_button("📊 Apri Google Sheet", SHEET_URL, use_container_width=True)
@@ -820,6 +830,62 @@ elif pagina == "Calendario":
                 for i in conf.index
             ],
         )
+elif pagina == "Gestione Utenti":
+    if not is_admin:
+        st.warning("Accesso riservato all'amministratore.")
+        st.stop()
+
+    st.markdown("## 👤 Gestione Utenti")
+
+    utenti = carica_utenti()
+    ws_u = get_ws_utenti()
+
+    st.markdown("### Utenti attuali")
+    st.dataframe(utenti)
+
+    st.divider()
+    st.markdown("### ➕ Aggiungi nuovo utente")
+
+    new_user = st.text_input("Username")
+    new_pw = st.text_input("Password", type="password")
+    new_role = st.selectbox("Ruolo", ["user", "admin"])
+
+    if st.button("Crea utente"):
+        if new_user in utenti.index:
+            st.error("Utente già esistente.")
+        else:
+            hashed = hash_pw(new_pw)
+            ws_u.append_row([new_user, hashed, new_role])
+            st.success("Utente creato.")
+            st.cache_data.clear()
+            st.rerun()
+
+    st.divider()
+    st.markdown("### 🔧 Modifica ruolo utente")
+
+    sel_user = st.selectbox("Seleziona utente", utenti.index)
+    new_role2 = st.selectbox("Nuovo ruolo", ["user", "admin"])
+
+    if st.button("Aggiorna ruolo"):
+        row = utenti.index.get_loc(sel_user) + 2
+        ws_u.update_cell(row, 3, new_role2)
+        st.success("Ruolo aggiornato.")
+        st.cache_data.clear()
+        st.rerun()
+
+    st.divider()
+    st.markdown("### 🔑 Reset password")
+
+    reset_user = st.selectbox("Utente da resettare", utenti.index, key="reset_user")
+    new_pw_reset = st.text_input("Nuova password", type="password", key="reset_pw")
+
+    if st.button("Reset password"):
+        hashed = hash_pw(new_pw_reset)
+        row = utenti.index.get_loc(reset_user) + 2
+        ws_u.update_cell(row, 2, hashed)
+        st.success("Password aggiornata.")
+        st.cache_data.clear()
+        st.rerun()
 
 elif pagina == "Impostazioni":
     if not can_edit_settings:
