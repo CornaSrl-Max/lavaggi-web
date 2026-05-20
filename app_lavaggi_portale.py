@@ -3,6 +3,7 @@ import html
 import json
 import re
 import urllib.parse
+import hashlib
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -12,7 +13,7 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 
 # ==========================================================
-# 1. CONFIGURAZIONE E ACCESSO
+# 1. CONFIGURAZIONE E ACCESSO (HASH GSHEET)
 # ==========================================================
 st.set_page_config(
     page_title="FV WASH MANAGER",
@@ -21,14 +22,23 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-PASSWORD_CORRETTA = st.secrets.get("password_portale", "admin123")
+# Funzione per recuperare l'hash dal foglio 'Config'
+@st.cache_data(ttl=600)
+def carica_hash_config():
+    try:
+        ws_cfg = get_ws_by_name("Config")
+        return ws_cfg.acell('A2').value
+    except:
+        return st.secrets.get("password_hash_default", "240be518ebb214644bbad525514197e44a95616f27f67f08398363a0a3014a04")
 
-if "autenticato" not in st.session_state:
-    st.session_state.autenticato = False
+def verifica_password(pwd_inserita, hash_rif):
+    return hashlib.sha256(pwd_inserita.encode()).hexdigest() == hash_rif
 
 def login():
-    if st.session_state.pwd_input == PASSWORD_CORRETTA:
+    hash_rif = carica_hash_config()
+    if verifica_password(st.session_state.pwd_input, hash_rif):
         st.session_state.autenticato = True
+        st.success("Accesso effettuato!")
     else:
         st.error("Password errata")
 
@@ -42,13 +52,62 @@ def logout():
 BASE_DIR = Path(__file__).resolve().parent
 FILE_MODELLI = BASE_DIR / "modelli_messaggi.json"
 SHEET_ID = "16RUw8kcZRurs_LYP9WCGbbLiXZnHEhw_lLEsdlS5Zuc"
-FOGLIO = st.secrets.get("google_sheet", {}).get("worksheet_name", "Lavaggi")
+FOGLIO_LAVAGGI = st.secrets.get("google_sheet", {}).get("worksheet_name", "Lavaggi")
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
+if "autenticato" not in st.session_state: st.session_state.autenticato = False
 if "df" not in st.session_state: st.session_state.df = None
 if "dash_filter" not in st.session_state: st.session_state.dash_filter = "Tutti"
 if "selected_idx" not in st.session_state: st.session_state.selected_idx = None
+
+@st.cache_resource(show_spinner=False)
+def get_ws_by_name(name):
+    creds = Credentials.from_service_account_info(dict(st.secrets["gcp_service_account"]), scopes=SCOPES)
+    return gspread.authorize(creds).open_by_key(SHEET_ID).worksheet(name)
+
+def carica_dati():
+    try:
+        ws = get_ws_by_name(FOGLIO_LAVAGGI)
+        df = pd.DataFrame(ws.get_all_records())
+        df.columns = [re.sub(r"\s+", "", str(c)).strip() for c in df.columns]
+        
+        # Verifica esistenza colonne richieste
+        cols = ["Cliente", "Impianto", "DataLavaggio", "Orario", "Telefono", "EmailCliente", "Stato", 
+                "Fornitore", "Promemoria30gg", "DataPromemoria", "Promemoria3gg", "DataPromemoria3gg", 
+                "DataWA30gg", "DataWA3gg", "Note", "EventoCalendarioCreato", "DataEventoCreato", 
+                "Task_Rem", "Task_Due"]
+        for c in cols: 
+            if c not in df.columns: df[c] = ""
+            
+        df["DataLavaggio_DT"] = pd.to_datetime(df["DataLavaggio"], errors="coerce", dayfirst=True).dt.date
+        df["GiorniMancanti"] = df["DataLavaggio_DT"].apply(lambda x: (x - date.today()).days if pd.notna(x) else None)
+        df["Task_Due_DT"] = pd.to_datetime(df["Task_Due"], errors="coerce", dayfirst=True).dt.date
+        return df
+    except Exception as e:
+        st.error(f"Errore: {e}"); return None
+
+def salva_sheet(idx, mappa):
+    if not st.session_state.autenticato: return False
+    try:
+        ws = get_ws_by_name(FOGLIO_LAVAGGI)
+        headers = ws.row_values(1)
+        hdr_map = {re.sub(r"\s+", "", h).strip().lower(): i + 1 for i, h in enumerate(headers)}
+        updates = []
+        for k, v in mappa.items():
+            col = hdr_map.get(k.lower())
+            if col: updates.append({"range": gspread.utils.rowcol_to_a1(int(idx) + 2, col), "values": [[str(v)]]})
+        if updates: ws.batch_update(updates, value_input_option="USER_ENTERED")
+        return True
+    except: return False
+
+def carica_modelli():
+    d = {"fornitori": ["BG Service"], "mail_fornitore": "commerciale@bgservicebergamo.com", "mail_30_ogg": "Lavaggio FV [CLIENTE]", "mail_30_txt": "Lavaggio il [DATA]", "wa_30_txt": "Lavaggio [DATA]", "mail_3_ogg": "Promemoria [CLIENTE]", "mail_3_txt": "Ricordiamo [DATA]", "wa_3_txt": "Promemoria domani [DATA]", "mail_forn_ogg": "Intervento [CLIENTE]", "mail_forn_txt": "Intervento [DATA]"}
+    if FILE_MODELLI.exists():
+        with open(FILE_MODELLI, "r", encoding="utf-8") as f: d.update(json.load(f))
+    return d
+
+if "modelli" not in st.session_state: st.session_state.modelli = carica_modelli()
 
 # ==========================================================
 # 3. STILE CSS
@@ -57,7 +116,6 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
     .stApp { background: #f8fafc; font-family: 'Inter', sans-serif; }
-    
     .hero {
         background: linear-gradient(rgba(15,23,42,0.8), rgba(15,23,42,0.8)), 
                     url('https://images.unsplash.com/photo-1509391366360-2e959784a276?q=80&w=1600&auto=format&fit=crop');
@@ -65,7 +123,6 @@ st.markdown("""
         padding: 50px 40px; border-radius: 24px; color: white; text-align: center;
         box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); margin-bottom: 2rem;
     }
-    
     .kpi-box {
         background: white; padding: 15px; border-radius: 18px; text-align: center;
         border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -75,95 +132,37 @@ st.markdown("""
     .kpi-icon { font-size: 30px; margin-bottom: 5px; display: block; }
     .kpi-val { font-size: 24px; font-weight: 800; color: #1e293b; margin: 0; }
     .kpi-lab { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-
     [data-testid="stSidebar"] { background: #0f172a; }
-    [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { color: #f8fafc !important; }
-    [data-testid="stSidebar"] .stButton > button { background-color: #1e293b !important; color: white !important; border: 1px solid #334155 !important; }
-
+    [data-testid="stSidebar"] * { color: #f8fafc !important; }
     .status-container { padding: 10px; border-radius: 12px; font-weight: 800; text-align: center; margin-bottom: 5px; color: white; }
     .st-da-programmare { background-color: #94a3b8; }
     .st-avvisato { background-color: #3b82f6; }
     .st-confermato { background-color: #22c55e; }
     .st-fatto { background-color: #475569; }
     .st-annullato { background-color: #ef4444; }
-
     .card { background: white; border: 1px solid #e2e8f0; border-radius: 20px; padding: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
     .stButton>button { border-radius: 12px !important; font-weight: 700 !important; width: 100%; }
-    .placeholder-box { background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 12px; margin-bottom: 20px; color: #1e40af; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================================
-# 4. LOGICA DATI
-# ==========================================================
-@st.cache_resource(show_spinner=False)
-def get_ws():
-    creds = Credentials.from_service_account_info(dict(st.secrets["gcp_service_account"]), scopes=SCOPES)
-    return gspread.authorize(creds).open_by_key(SHEET_ID).worksheet(FOGLIO)
-
-def carica_dati():
-    try:
-        ws = get_ws()
-        df = pd.DataFrame(ws.get_all_records())
-        df.columns = [re.sub(r"\s+", "", str(c)).strip() for c in df.columns]
-        
-        # Elenco completo colonne necessarie
-        cols = ["Cliente", "Impianto", "DataLavaggio", "Orario", "Telefono", "EmailCliente", "Stato", 
-                "Fornitore", "Promemoria30gg", "DataPromemoria", "Promemoria3gg", "DataPromemoria3gg", 
-                "DataWA30gg", "DataWA3gg", "Note", "EventoCalendarioCreato", "DataEventoCreato", "Task_Rem", "Task_Due"]
-        
-        for c in cols: 
-            if c not in df.columns: df[c] = ""
-            
-        df["DataLavaggio_DT"] = pd.to_datetime(df["DataLavaggio"], errors="coerce", dayfirst=True).dt.date
-        df["GiorniMancanti"] = df["DataLavaggio_DT"].apply(lambda x: (x - date.today()).days if pd.notna(x) else None)
-        df["Task_Due_DT"] = pd.to_datetime(df["Task_Due"], errors="coerce", dayfirst=True).dt.date
-        return df
-    except Exception as e:
-        st.error(f"Errore caricamento dati: {e}"); return None
-
-def salva_sheet(idx, mappa):
-    if not st.session_state.autenticato: return False
-    try:
-        ws = get_ws(); headers = ws.row_values(1)
-        hdr_map = {re.sub(r"\s+", "", h).strip().lower(): i + 1 for i, h in enumerate(headers)}
-        updates = []
-        for k, v in mappa.items():
-            col = hdr_map.get(k.lower())
-            if col: updates.append({"range": gspread.utils.rowcol_to_a1(int(idx) + 2, col), "values": [[str(v)]]})
-        if updates: ws.batch_update(updates, value_input_option="USER_ENTERED")
-        return True
-    except Exception as e:
-        st.error(f"Errore salvataggio: {e}")
-        return False
-
-def carica_modelli():
-    d = {"fornitori": ["BG Service (commerciale@bgservicebergamo.com)"], "mail_fornitore": "commerciale@bgservicebergamo.com", "mail_30_ogg": "Lavaggio FV [CLIENTE]", "mail_30_txt": "Lavaggio programmato il [DATA] ore [ORARIO]", "wa_30_txt": "Buongiorno, lavaggio programmato il [DATA] ore [ORARIO]", "mail_3_ogg": "Promemoria Lavaggio [CLIENTE]", "mail_3_txt": "Le ricordiamo l'appuntamento del [DATA]", "wa_3_txt": "Promemoria domani [DATA]", "mail_forn_ogg": "Intervento [CLIENTE] - [DATA]", "mail_forn_txt": "Buongiorno, confermiamo intervento per il [DATA]."}
-    if FILE_MODELLI.exists():
-        with open(FILE_MODELLI, "r", encoding="utf-8") as f: d.update(json.load(f))
-    return d
-
-if "modelli" not in st.session_state: st.session_state.modelli = carica_modelli()
-
-# ==========================================================
-# 5. SIDEBAR
+# 4. SIDEBAR
 # ==========================================================
 with st.sidebar:
     st.markdown("### 🧼 FV WASH MANAGER")
     if not st.session_state.autenticato:
         st.text_input("Password Amministratore", type="password", key="pwd_input", on_change=login)
     else:
-        st.success("✅ Modalità Modifica")
+        st.success("✅ Modalità Modifica Attiva")
         if st.button("🔓 Logout"): logout()
     st.divider()
     pagina = st.radio("Navigazione", ["Dashboard", "Modelli Messaggi", "Fornitori", "Calendario", "Impostazioni"])
     st.divider()
     st.link_button("📊 Apri Google Sheet", SHEET_URL, use_container_width=True)
-    if st.button("🔄 Aggiorna Dati"): 
-        st.session_state.df = carica_dati(); st.rerun()
+    if st.button("🔄 Aggiorna Dati"): st.session_state.df = carica_dati(); st.rerun()
 
 # ==========================================================
-# 6. DASHBOARD
+# 5. DASHBOARD
 # ==========================================================
 if st.session_state.df is None: st.session_state.df = carica_dati()
 df = st.session_state.df
@@ -172,7 +171,7 @@ is_read_only = not st.session_state.autenticato
 if pagina == "Dashboard":
     st.markdown('<div class="hero"><h1>FV WASH MANAGER</h1><p>Controllo Operativo Interventi</p></div>', unsafe_allow_html=True)
     
-    # --- ALERTS INTERATTIVI ---
+    # --- CENTRO AVVISI INTERATTIVO ---
     oggi = date.today()
     urg_no_mail = df[(df["GiorniMancanti"].between(0, 5)) & (df["DataPromemoria3gg"] == "") & (df["Stato"].str.upper() != "FATTO")]
     manca_30gg = df[(df["GiorniMancanti"] > 15) & (df["DataPromemoria"] == "") & (df["Stato"].str.upper() != "ANNULLATO DA CLIENTE")]
@@ -189,10 +188,10 @@ if pagina == "Dashboard":
                 if st.button(f"📧 Avvisi 30gg mancanti: {len(manca_30gg)}"): st.session_state.dash_filter = "Alert: Avvisi 30gg"; st.rerun()
         with c_al3:
             if not task_scadenza.empty:
-                if st.button(f"🔔 Task in scadenza: {len(task_scadenza)}"): st.session_state.dash_filter = "Alert: Task Reminder"; st.rerun()
+                if st.button(f"🔔 Task Reminder: {len(task_scadenza)}"): st.session_state.dash_filter = "Alert: Task Reminder"; st.rerun()
         st.divider()
 
-    # --- LOGICA FILTRI KPI ---
+    # --- FILTRI KPI ---
     df_tutti = df.sort_values(by="Cliente")
     df_conf = df[df["Stato"].str.upper() == "CONFERMATO DA CLIENTE"].sort_values(by="DataLavaggio_DT", na_position="last")
     df_urg = df[(df["GiorniMancanti"].between(0, 15)) & (df["Stato"].str.upper() != "CONFERMATO DA CLIENTE") & (df["Stato"].str.upper() != "FATTO")].sort_values(by="DataLavaggio_DT", na_position="last")
@@ -210,7 +209,7 @@ if pagina == "Dashboard":
 
     st.divider()
 
-    # --- SELEZIONE VISTA ---
+    # --- LISTA CLIENTE ---
     if st.session_state.dash_filter == "Alert: Reminder 3gg": df_view = urg_no_mail.sort_values(by="DataLavaggio_DT")
     elif st.session_state.dash_filter == "Alert: Avvisi 30gg": df_view = manca_30gg.sort_values(by="DataLavaggio_DT")
     elif st.session_state.dash_filter == "Alert: Task Reminder": df_view = task_scadenza.sort_values(by="Task_Due_DT")
@@ -229,11 +228,8 @@ if pagina == "Dashboard":
     with col_l:
         st.markdown(f"### 📅 {st.session_state.dash_filter}")
         search = st.text_input("🔍 Cerca...", placeholder="Filtra Cliente...")
-        if search: 
-            df_attivi = df_attivi[df_attivi["Cliente"].str.contains(search, case=False)]
-            df_sospesi = df_sospesi[df_sospesi["Cliente"].str.contains(search, case=False)]
+        if search: df_attivi = df_attivi[df_attivi["Cliente"].str.contains(search, case=False)]; df_sospesi = df_sospesi[df_sospesi["Cliente"].str.contains(search, case=False)]
         
-        # --- LISTA CON SEMAFORO ---
         for idx, r in df_attivi.head(45).iterrows():
             st_u = str(r['Stato']).upper()
             gm = r['GiorniMancanti']
@@ -257,30 +253,31 @@ if pagina == "Dashboard":
         if st.session_state.selected_idx is not None:
             row = df.loc[st.session_state.selected_idx]
             st.markdown(f'<div class="card"><h2>{row["Cliente"]}</h2>', unsafe_allow_html=True)
+            if is_read_only: st.warning("🔒 Sola Lettura. Effettua il login per modificare.")
+            
             c1, c2 = st.columns(2)
             n_cl = c1.text_input("Nome Cliente", row["Cliente"], disabled=is_read_only)
             n_im = c2.text_input("Impianto", row["Impianto"], disabled=is_read_only)
+            
             c3, c4, c5 = st.columns(3)
             d_dt = row["DataLavaggio_DT"] if pd.notna(row["DataLavaggio_DT"]) else date.today()
             n_dt = c3.date_input("Data Lavaggio", d_dt, format="DD/MM/YYYY", disabled=is_read_only)
             n_or = c4.text_input("Orario", row["Orario"], disabled=is_read_only)
+            
             st_list = ["DA PROGRAMMARE", "AVVISATO CLIENTE", "CONFERMATO DA CLIENTE", "FATTO", "ANNULLATO DA CLIENTE"]
             curr_st = row["Stato"] if row["Stato"] in st_list else "DA PROGRAMMARE"
-            st_cls = "st-da-programmare"
-            if "AVVISATO" in curr_st: st_cls = "st-avvisato"
-            elif "CONFERMATO" in curr_st: st_cls = "st-confermato"
-            elif "FATTO" in curr_st: st_cls = "st-fatto"
-            elif "ANNULLATO" in curr_st: st_cls = "st-annullato"
             with c5:
-                st.markdown(f'<div class="status-container {st_cls}">{curr_st}</div>', unsafe_allow_html=True)
-                n_st = st.selectbox("Stato", st_list, index=st_list.index(curr_st), label_visibility="collapsed", disabled=is_read_only)
+                n_st = st.selectbox("Stato", st_list, index=st_list.index(curr_st), disabled=is_read_only)
+            
             c6, c7 = st.columns(2)
             n_tel = c6.text_input("Telefono", row["Telefono"], disabled=is_read_only)
             n_ml = c7.text_input("Email Cliente", row["EmailCliente"], disabled=is_read_only)
+            
             n_note = st.text_area("Note", row["Note"], height=70, disabled=is_read_only)
             
             st.markdown("#### 🔔 Reminder Custom")
-            c_tr, c_td = st.columns([2, 1]); n_tr = c_tr.text_input("Azione", row["Task_Rem"], disabled=is_read_only)
+            c_tr, c_td = st.columns([2, 1])
+            n_tr = c_tr.text_input("Azione", row["Task_Rem"], disabled=is_read_only)
             n_td = c_td.date_input("Scadenza Task", row["Task_Due_DT"] if pd.notna(row["Task_Due_DT"]) else None, format="DD/MM/YYYY", disabled=is_read_only)
 
             if st.button("💾 AGGIORNA DATI CLIENTE", type="primary", disabled=is_read_only):
@@ -295,38 +292,44 @@ if pagina == "Dashboard":
             
             ca, cb, cc = st.columns(3)
             if ca.button(f"✉️ Email {tipo}gg", disabled=is_read_only):
-                ogg = comp(mod[f"mail_{tipo}_ogg"], row, n_dt.strftime("%d/%m/%Y"), n_or); txt = comp(mod[f"mail_{tipo}_txt"], row, n_dt.strftime("%d/%m/%Y"), n_or)
+                ogg = comp(mod[f"mail_{tipo}_ogg"], row, n_dt.strftime("%d/%m/%Y"), n_or)
+                txt = comp(mod[f"mail_{tipo}_txt"], row, n_dt.strftime("%d/%m/%Y"), n_or)
                 col_d = "DataPromemoria" + ("3gg" if tipo=="3" else ""); col_f = "Promemoria" + ("3gg" if tipo=="3" else "30gg")
                 if salva_sheet(st.session_state.selected_idx, {col_d: date.today().strftime("%d/%m/%Y"), col_f: "SI", "Stato": "AVVISATO CLIENTE"}):
-                    url = f"mailto:{n_ml}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}"
-                    st.markdown(f'<a href="{url}" target="_blank" style="text-decoration:none;"><div style="background:#2563eb;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">APRI EMAIL</div></a>', unsafe_allow_html=True)
+                    st.markdown(f'<a href="mailto:{n_ml}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}" target="_blank" style="text-decoration:none;"><div style="background:#2563eb;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">APRI EMAIL</div></a>', unsafe_allow_html=True)
+
             if cb.button(f"💬 WhatsApp {tipo}gg", disabled=is_read_only):
-                txt = comp(mod[f"wa_{tipo}_txt"], row, n_dt.strftime("%d/%m/%Y"), n_or); num = "".join(filter(str.isdigit, n_tel))
+                txt = comp(mod[f"wa_{tipo}_txt"], row, n_dt.strftime("%d/%m/%Y"), n_or)
+                num = "".join(filter(str.isdigit, n_tel))
                 if num.startswith("3") and len(num) == 10: num = "39" + num
                 col_d = "DataWA" + tipo + "gg"; col_f = "Promemoria" + ("3gg" if tipo=="3" else "30gg")
                 if salva_sheet(st.session_state.selected_idx, {col_d: date.today().strftime("%d/%m/%Y"), col_f: "SI", "Stato": "AVVISATO CLIENTE"}):
-                    url = f"https://wa.me/{num}?text={urllib.parse.quote(txt)}"
-                    st.markdown(f'<a href="{url}" target="_blank" style="text-decoration:none;"><div style="background:#16a34a;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">APRI WHATSAPP</div></a>', unsafe_allow_html=True)
+                    st.markdown(f'<a href="https://wa.me/{num}?text={urllib.parse.quote(txt)}" target="_blank" style="text-decoration:none;"><div style="background:#16a34a;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">APRI WHATSAPP</div></a>', unsafe_allow_html=True)
+            
             if cc.button("👷 Email Fornitore", disabled=is_read_only or n_st != "CONFERMATO DA CLIENTE"):
-                ogg = comp(mod["mail_forn_ogg"], row, n_dt.strftime("%d/%m/%Y"), n_or); txt = comp(mod["mail_forn_txt"], row, n_dt.strftime("%d/%m/%Y"), n_or)
+                ogg = comp(mod["mail_forn_ogg"], row, n_dt.strftime("%d/%m/%Y"), n_or)
+                txt = comp(mod["mail_forn_txt"], row, n_dt.strftime("%d/%m/%Y"), n_or)
                 st.markdown(f'<a href="mailto:{mod["mail_fornitore"]}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}" target="_blank" style="text-decoration:none;"><div style="background:#475569;color:white;padding:12px;text-align:center;border-radius:12px;font-weight:700;">AVVISA FORNITORE</div></a>', unsafe_allow_html=True)
+
+# ==========================================================
+# 6. FORNITORI (RESOCONTO 30GG)
+# ==========================================================
+elif pagina == "Fornitori":
+    st.markdown("## 👷 Resoconto Prossimi 30 Giorni")
+    limite = date.today() + timedelta(days=30)
+    df_f = df[(df["DataLavaggio_DT"].between(date.today(), limite)) & (df["Stato"].str.upper() != "ANNULLATO DA CLIENTE")]
+    st.write(f"Lavaggi programmati entro il {limite.strftime('%d/%m/%Y')}: **{len(df_f)}**")
+    if not df_f.empty:
+        st.dataframe(df_f[["DataLavaggio", "Orario", "Cliente", "Impianto", "Stato"]], use_container_width=True)
+        if st.button("Genera Riepilogo Email"):
+            testo = "Buongiorno,\ndi seguito il riepilogo per i prossimi 30gg:\n\n"
+            for _, r in df_f.iterrows(): testo += f"- {r['DataLavaggio']} {r['Orario']}: {r['Cliente']} | Stato: {r['Stato']}\n"
+            st.code(testo)
+            st.markdown(f'<a href="mailto:{st.session_state.modelli["mail_fornitore"]}?subject=Riepilogo Lavaggi 30gg&body={urllib.parse.quote(testo)}" target="_blank" style="background:#1e293b;color:white;padding:10px;border-radius:10px;text-decoration:none;">INVIA AL FORNITORE</a>', unsafe_allow_html=True)
 
 # ==========================================================
 # 7. ALTRE PAGINE
 # ==========================================================
-elif pagina == "Fornitori":
-    st.markdown("## 👷 Resoconto Lavaggi Prossimi 30 Giorni")
-    limite = date.today() + timedelta(days=30)
-    df_f = df[(df["DataLavaggio_DT"].between(date.today(), limite)) & (df["Stato"].str.upper() != "ANNULLATO DA CLIENTE")]
-    st.write(f"Interventi programmati entro il {limite.strftime('%d/%m/%Y')}: **{len(df_f)}**")
-    if not df_f.empty:
-        st.dataframe(df_f[["DataLavaggio", "Orario", "Cliente", "Impianto", "Stato"]], use_container_width=True)
-        if st.button("Genera Riepilogo Email"):
-            testo = "Buongiorno,\ndi seguito il riepilogo dei lavaggi per i prossimi 30gg:\n\n"
-            for _, r in df_f.iterrows(): testo += f"- {r['DataLavaggio']} {r['Orario']}: {r['Cliente']} | {r['Stato']}\n"
-            st.code(testo)
-            st.markdown(f'<a href="mailto:{st.session_state.modelli["mail_fornitore"]}?subject=Lavaggi 30gg&body={urllib.parse.quote(testo)}" target="_blank" style="background:#1e293b;color:white;padding:10px;border-radius:10px;text-decoration:none;">INVIA AL FORNITORE</a>', unsafe_allow_html=True)
-
 elif pagina == "Modelli Messaggi":
     st.markdown("## 📝 Personalizzazione Messaggi")
     mod = st.session_state.modelli
@@ -337,21 +340,19 @@ elif pagina == "Modelli Messaggi":
         mod["mail_3_ogg"] = c2.text_input("Ogg 3gg", mod["mail_3_ogg"], disabled=is_read_only); mod["mail_3_txt"] = c2.text_area("Testo 3gg", mod["mail_3_txt"], disabled=is_read_only)
     with st.expander("💬 WHATSAPP"):
         mod["wa_30_txt"] = st.text_area("WA 30gg", mod["wa_30_txt"], disabled=is_read_only); mod["wa_3_txt"] = st.text_area("WA 3gg", mod["wa_3_txt"], disabled=is_read_only)
-    with st.expander("👷 FORNITORE"):
-        mod["mail_forn_ogg"] = st.text_input("Ogg Fornitore", mod["mail_forn_ogg"], disabled=is_read_only); mod["mail_forn_txt"] = st.text_area("Testo Fornitore", mod["mail_forn_txt"], disabled=is_read_only)
     if st.button("💾 SALVA MODELLI", type="primary", disabled=is_read_only):
-        with open(FILE_MODELLI, "w", encoding="utf-8") as f: json.dump(mod, f, indent=4); st.success("Modelli salvati!")
+        with open(FILE_MODELLI, "w", encoding="utf-8") as f: json.dump(mod, f, indent=4); st.success("Salvati!")
 
 elif pagina == "Calendario":
-    st.markdown("## 📅 Esporta Eventi")
+    st.markdown("## 📅 Esporta Calendario")
     conf = df[(df["Stato"].str.upper() == "CONFERMATO DA CLIENTE") & (df["EventoCalendarioCreato"] != "SI")]
     if not conf.empty:
         ics = "BEGIN:VCALENDAR\n"
         for i, r in conf.iterrows(): ics += f"BEGIN:VEVENT\nSUMMARY:Lavaggio {r['Cliente']}\nDTSTART:{str(r['DataLavaggio_DT']).replace('-','')}T080000\nEND:VEVENT\n"
         ics += "END:VCALENDAR"
         if st.download_button("Scarica .ics", ics, "nuovi.ics", disabled=is_read_only):
-            [salva_sheet(i, {"EventoCalendarioCreato":"SI", "DataEventoCreato": datetime.now().strftime("%d/%m/%Y %H:%M")}) for i in conf.index]
-            st.success("Eventi segnati come creati.")
+            for i in conf.index: salva_sheet(i, {"EventoCalendarioCreato":"SI", "DataEventoCreato": datetime.now().strftime("%d/%m/%Y %H:%M")})
+            st.success("Spunta effettuata nel foglio.")
 
 elif pagina == "Impostazioni":
     st.markdown("## ⚙️ Diagnostica")
