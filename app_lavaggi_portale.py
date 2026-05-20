@@ -45,8 +45,7 @@ SCOPES = [
 # ==========================================================
 # 2. STILE
 # ==========================================================
-st.markdown(
-    """
+st.markdown("""
 <style>
     .stApp {
         background: #f8fafc;
@@ -76,11 +75,12 @@ st.markdown(
         background: #0f172a;
     }
 
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] .stMarkdown,
-    [data-testid="stSidebar"] .stRadio label,
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
     [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] span {
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] .stMarkdown {
         color: #f8fafc !important;
     }
 
@@ -89,11 +89,40 @@ st.markdown(
         background: #ffffff !important;
     }
 
-    [data-testid="stSidebar"] button {
+    [data-testid="stSidebar"] .stTextInput input {
         color: #0f172a !important;
         background: #ffffff !important;
+    }
+
+    [data-testid="stSidebar"] .stButton button,
+    [data-testid="stSidebar"] .stDownloadButton button,
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"],
+    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {
+        background: #ffffff !important;
+        color: #0f172a !important;
         border: 1px solid #cbd5e1 !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
+        border-radius: 10px !important;
+    }
+
+    [data-testid="stSidebar"] .stButton button *,
+    [data-testid="stSidebar"] .stDownloadButton button *,
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] *,
+    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] * {
+        color: #0f172a !important;
+    }
+
+    [data-testid="stSidebar"] a {
+        color: #0f172a !important;
+        background: #ffffff !important;
+        border-radius: 10px !important;
+        font-weight: 800 !important;
+        border: 1px solid #cbd5e1 !important;
+        text-decoration: none !important;
+    }
+
+    [data-testid="stSidebar"] a * {
+        color: #0f172a !important;
     }
 
     .kpi-btn button {
@@ -105,6 +134,10 @@ st.markdown(
         white-space: pre-line;
         color: #0f172a !important;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .kpi-btn button * {
+        color: #0f172a !important;
     }
 
     .kpi-btn button:hover {
@@ -169,6 +202,10 @@ st.markdown(
         margin-top: 8px;
     }
 
+    .action-link * {
+        color: white !important;
+    }
+
     .action-mail {
         background: #2563eb;
     }
@@ -181,11 +218,7 @@ st.markdown(
         background: #475569;
     }
 </style>
-""",
-    unsafe_allow_html=True,
-)
-
-
+""", unsafe_allow_html=True)
 # ==========================================================
 # 3. GOOGLE SHEETS
 # ==========================================================
