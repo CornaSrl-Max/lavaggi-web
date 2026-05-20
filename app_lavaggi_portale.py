@@ -1,250 +1,155 @@
-    [data-testid="stSidebar"] .stDownloadButton button *,
-    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] *,
-    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] * {
-        color: #0f172a !important;
-    }
-
-    [data-testid="stSidebar"] a,
-    [data-testid="stSidebar"] a * {
-        color: #0f172a !important;
-        font-weight: 800 !important;
-    }
-
-    .kpi-btn button {
-        min-height: 98px;
-        border-radius: 16px !important;
-        border: 1px solid #dbe3ef !important;
-        background: #ffffff !important;
-        font-weight: 800 !important;
-        white-space: pre-line;
-        color: #0f172a !important;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
-
-    .kpi-btn button * {
-        color: #0f172a !important;
-    }
-
-    .kpi-btn button:hover {
-        border-color: #2563eb !important;
-        background: #f8fbff !important;
-    }
-
-    .kpi-btn-active button {
-        border: 2px solid #2563eb !important;
-        background: #eff6ff !important;
-    }
-
-    .card {
-        background: white;
-        padding: 25px;
-        border-radius: 20px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    }
-
-    .status-badge {
-        padding: 11px 12px;
-        border-radius: 12px;
-        font-weight: 900;
-        text-align: center;
-        font-size: 13px;
-        border: 1px solid transparent;
-        margin-bottom: 8px;
-        min-height: 42px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .status-da-programmare {
-        background: #f1f5f9;
-        color: #475569;
-        border-color: #cbd5e1;
-    }
-
-    .status-avvisato {
-        background: #fef3c7;
-        color: #92400e;
-        border-color: #f59e0b;
-    }
-
-    .status-confermato {
-        background: #dcfce7;
-        color: #166534;
-        border-color: #22c55e;
-    }
-
-    .status-fatto {
-        background: #dbeafe;
-        color: #1e40af;
-        border-color: #60a5fa;
-    }
-
-    .status-annullato {
-        background: #e5e7eb;
-        color: #374151;
-        border-color: #9ca3af;
-    }
-
-    .action-link {
-        display: block;
-        text-align: center;
-        text-decoration: none;
-        color: white !important;
-        padding: 12px;
-        border-radius: 12px;
-        font-weight: 800;
-        margin-top: 8px;
-    }
-
-    .action-mail { background: #2563eb; }
-    .action-wa { background: #16a34a; }
-    .action-supplier { background: #475569; }
-</style>
-""", unsafe_allow_html=True)
-
-
-# ==========================================================
-# 3. GOOGLE SHEETS
-# ==========================================================
-@st.cache_resource(show_spinner=False)
-def get_client():
-    creds = Credentials.from_service_account_info(
-        dict(st.secrets["gcp_service_account"]),
-        scopes=SCOPES,
-    )
-    return gspread.authorize(creds)
-
-
-@st.cache_resource(show_spinner=False)
-def get_spreadsheet():
-    return get_client().open_by_key(SHEET_ID)
-
-
-def get_ws_by_name(name):
-    return get_spreadsheet().worksheet(name)
-
-
-def normalizza_nome_colonna(nome):
-    return re.sub(r"\s+", "", str(nome)).strip()
-
-
-def carica_dati():
-    try:
-        ws = get_ws_by_name(FOGLIO_LAVAGGI)
-        df = pd.DataFrame(ws.get_all_records())
-
-        if df.empty:
-            return pd.DataFrame()
-
-        df.columns = [normalizza_nome_colonna(c) for c in df.columns]
-
-        colonne = [
-            "Cliente", "Impianto", "DataLavaggio", "Orario", "Telefono",
-            "EmailCliente", "Stato", "Fornitore", "Promemoria30gg",
-            "DataPromemoria", "Promemoria3gg", "DataPromemoria3gg",
-            "DataWA30gg", "DataWA3gg", "Note", "EventoCalendarioCreato",
-            "DataEventoCreato", "Task_Rem", "Task_Due",
-        ]
-
-        for col in colonne:
-            if col not in df.columns:
-                df[col] = ""
-
-        df["DataLavaggio_DT"] = pd.to_datetime(
-            df["DataLavaggio"], errors="coerce", dayfirst=True
-        ).dt.date
-
-        df["Task_Due_DT"] = pd.to_datetime(
-            df["Task_Due"], errors="coerce", dayfirst=True
-        ).dt.date
-
-        df["GiorniMancanti"] = df["DataLavaggio_DT"].apply(
-            lambda x: (x - date.today()).days if pd.notna(x) else 999
+            df_f[["DataLavaggio", "Orario", "Cliente", "Impianto", "Stato"]],
+            use_container_width=True,
         )
 
-        return df
+        testo = "Buongiorno,\ndi seguito il riepilogo dei lavaggi dei prossimi 30 giorni:\n\n"
 
-    except Exception as e:
-        st.error(f"Errore caricamento dati: {e}")
-        return pd.DataFrame()
+        for _, r in df_f.iterrows():
+            testo += f"- {r['DataLavaggio']} {r['Orario']}: {r['Cliente']} | {r['Impianto']} | Stato: {r['Stato']}\n"
 
-
-def salva_sheet(idx, mappa):
-    if not st.session_state.loggato:
-        return False
-
-    try:
-        ws = get_ws_by_name(FOGLIO_LAVAGGI)
-        headers = ws.row_values(1)
-
-        hdr_map = {
-            normalizza_nome_colonna(h).lower(): i + 1
-            for i, h in enumerate(headers)
-        }
-
-        updates = []
-
-        for k, v in mappa.items():
-            col = hdr_map.get(normalizza_nome_colonna(k).lower())
-            if col:
-                cella = gspread.utils.rowcol_to_a1(int(idx) + 2, col)
-                updates.append({"range": cella, "values": [[str(v)]]})
-
-        if updates:
-            ws.batch_update(updates, value_input_option="USER_ENTERED")
-
-        return True
-
-    except Exception as e:
-        st.error(f"Errore salvataggio: {e}")
-        return False
+        if st.button("Genera Email Fornitore", disabled=not can_send_comms):
+            st.code(testo)
+            url = (
+                f"mailto:{st.session_state.modelli['mail_fornitore']}"
+                f"?subject=Riepilogo Lavaggi 30gg"
+                f"&body={urllib.parse.quote(testo)}"
+            )
+            st.markdown(f'<a href="{url}" target="_blank" class="action-link action-supplier">INVIA AL FORNITORE</a>', unsafe_allow_html=True)
 
 
 # ==========================================================
-# 4. AUTENTICAZIONE E UTENTI
+# 11. CALENDARIO
 # ==========================================================
-@st.cache_data(ttl=300, show_spinner=False)
-def carica_utenti():
-    try:
-        ws = get_ws_by_name(FOGLIO_UTENTI)
-        utenti = pd.DataFrame(ws.get_all_records())
+elif pagina == "Calendario":
+    st.title("📅 Esporta Calendario")
 
-        if utenti.empty:
-            return pd.DataFrame()
+    conf = df[
+        (df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE")
+        & (df["EventoCalendarioCreato"].astype(str).str.upper() != "SI")
+    ]
 
-        utenti.columns = [str(c).strip().lower() for c in utenti.columns]
+    if conf.empty:
+        st.info("Nessun nuovo evento confermato da esportare.")
+    else:
+        ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//FV Wash Manager//IT\n"
 
-        required = {"username", "password_hash", "ruolo"}
-        if not required.issubset(set(utenti.columns)):
-            st.error("Il foglio Utenti deve avere le colonne: username, password_hash, ruolo")
-            return pd.DataFrame()
+        for _, r in conf.iterrows():
+            dt = r["DataLavaggio_DT"]
 
-        utenti["username"] = utenti["username"].astype(str).str.strip()
-        utenti["password_hash"] = utenti["password_hash"].astype(str).str.strip()
-        utenti["ruolo"] = utenti["ruolo"].astype(str).str.strip().str.lower()
+            if pd.notna(dt):
+                data_ics = str(dt).replace("-", "")
+                ics += (
+                    "BEGIN:VEVENT\n"
+                    f"SUMMARY:Lavaggio {r['Cliente']}\n"
+                    f"DTSTART:{data_ics}T080000\n"
+                    f"DTEND:{data_ics}T090000\n"
+                    "END:VEVENT\n"
+                )
 
-        return utenti
+        ics += "END:VCALENDAR"
 
-    except Exception as e:
-        st.error(f"Errore caricamento utenti: {e}")
-        return pd.DataFrame()
+        if st.download_button("Scarica .ics", ics, "lavaggi.ics", disabled=not can_send_comms):
+            for i in conf.index:
+                salva_sheet(
+                    i,
+                    {
+                        "EventoCalendarioCreato": "SI",
+                        "DataEventoCreato": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                    },
+                )
+
+            st.success("Eventi segnati come esportati.")
 
 
-def genera_hash_password(password):
-    return bcrypt.hashpw(
-        password.encode("utf-8"),
-        bcrypt.gensalt(),
-    ).decode("utf-8")
+# ==========================================================
+# 12. GESTIONE UTENTI
+# ==========================================================
+elif pagina == "Gestione Utenti":
+    st.title("👤 Gestione Utenti")
 
+    if not is_admin:
+        st.warning("Accesso riservato agli amministratori.")
+        st.stop()
 
-def verifica_bcrypt(password, password_hash):
-    try:
-        if not password_hash.startswith("$2"):
-            return False
+    utenti = carica_utenti()
 
-        return bcrypt.checkpw(
-            password.encode("utf-8"),
-            password_hash.encode("utf-8"),
+    if utenti.empty:
+        st.warning("Nessun utente trovato.")
+    else:
+        st.dataframe(
+            utenti[["username", "ruolo"]],
+            use_container_width=True,
+            hide_index=True,
         )
+
+    st.divider()
+    st.markdown("### Nuovo utente / modifica utente")
+
+    lista_utenti = ["Nuovo utente"]
+
+    if not utenti.empty:
+        lista_utenti += utenti["username"].tolist()
+
+    scelta = st.selectbox("Seleziona utente", lista_utenti)
+
+    if scelta == "Nuovo utente":
+        username = st.text_input("Username")
+        ruolo = st.selectbox("Ruolo", ["user", "supervisor", "admin"])
+        password = st.text_input("Password", type="password")
+        conferma = st.text_input("Conferma password", type="password")
+
+        if st.button("➕ CREA UTENTE", type="primary"):
+            if password != conferma:
+                st.error("Le password non coincidono.")
+            elif salva_utente(username, password, ruolo):
+                st.success("Utente creato.")
+                st.rerun()
+
+    else:
+        record = utenti[utenti["username"] == scelta].iloc[0]
+
+        username = st.text_input("Username", record["username"], disabled=True)
+
+        ruolo_corrente = record["ruolo"] if record["ruolo"] in ["user", "supervisor", "admin"] else "user"
+
+        ruolo = st.selectbox(
+            "Ruolo",
+            ["user", "supervisor", "admin"],
+            index=["user", "supervisor", "admin"].index(ruolo_corrente),
+        )
+
+        st.info("Lascia vuota la password se vuoi modificare solo il ruolo.")
+
+        nuova_password = st.text_input("Nuova password", type="password")
+        conferma_password = st.text_input("Conferma nuova password", type="password")
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            if st.button("💾 SALVA MODIFICHE", type="primary"):
+                if nuova_password and nuova_password != conferma_password:
+                    st.error("Le password non coincidono.")
+                elif salva_utente(username, nuova_password, ruolo):
+                    st.success("Utente aggiornato.")
+                    st.rerun()
+
+        with c2:
+            if st.button("🗑️ ELIMINA UTENTE"):
+                if elimina_utente(username):
+                    st.success("Utente eliminato.")
+                    st.rerun()
+
+
+# ==========================================================
+# 13. IMPOSTAZIONI
+# ==========================================================
+elif pagina == "Impostazioni":
+    st.title("⚙️ Diagnostica")
+
+    st.write(f"Utente: **{st.session_state.utente or 'ospite'}**")
+    st.write(f"Ruolo: **{st.session_state.ruolo}**")
+    st.write(f"Foglio lavaggi: **{FOGLIO_LAVAGGI}**")
+    st.write(f"Foglio utenti: **{FOGLIO_UTENTI}**")
+    st.write(f"Foglio modelli: **{FOGLIO_MODELLI}**")
+
+    st.dataframe(df, use_container_width=True)
