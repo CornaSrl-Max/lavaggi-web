@@ -4,4 +4,3 @@ gspread
 google-auth
 passlib
 bcrypt==3.2.2
-spreadsheet_id = "16RUw8kcZRurs_LYP9WCGbbLiXZnHEhw_lLEsdlS5Zuc"
