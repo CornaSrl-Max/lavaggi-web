@@ -1,155 +1,249 @@
-            df_f[["DataLavaggio", "Orario", "Cliente", "Impianto", "Stato"]],
-            use_container_width=True,
-        )
 
-        testo = "Buongiorno,\ndi seguito il riepilogo dei lavaggi dei prossimi 30 giorni:\n\n"
-
-        for _, r in df_f.iterrows():
-            testo += f"- {r['DataLavaggio']} {r['Orario']}: {r['Cliente']} | {r['Impianto']} | Stato: {r['Stato']}\n"
-
-        if st.button("Genera Email Fornitore", disabled=not can_send_comms):
-            st.code(testo)
-            url = (
-                f"mailto:{st.session_state.modelli['mail_fornitore']}"
-                f"?subject=Riepilogo Lavaggi 30gg"
-                f"&body={urllib.parse.quote(testo)}"
-            )
-            st.markdown(f'<a href="{url}" target="_blank" class="action-link action-supplier">INVIA AL FORNITORE</a>', unsafe_allow_html=True)
+    except Exception:
+        return False
 
 
-# ==========================================================
-# 11. CALENDARIO
-# ==========================================================
-elif pagina == "Calendario":
-    st.title("📅 Esporta Calendario")
-
-    conf = df[
-        (df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE")
-        & (df["EventoCalendarioCreato"].astype(str).str.upper() != "SI")
-    ]
-
-    if conf.empty:
-        st.info("Nessun nuovo evento confermato da esportare.")
-    else:
-        ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//FV Wash Manager//IT\n"
-
-        for _, r in conf.iterrows():
-            dt = r["DataLavaggio_DT"]
-
-            if pd.notna(dt):
-                data_ics = str(dt).replace("-", "")
-                ics += (
-                    "BEGIN:VEVENT\n"
-                    f"SUMMARY:Lavaggio {r['Cliente']}\n"
-                    f"DTSTART:{data_ics}T080000\n"
-                    f"DTEND:{data_ics}T090000\n"
-                    "END:VEVENT\n"
-                )
-
-        ics += "END:VCALENDAR"
-
-        if st.download_button("Scarica .ics", ics, "lavaggi.ics", disabled=not can_send_comms):
-            for i in conf.index:
-                salva_sheet(
-                    i,
-                    {
-                        "EventoCalendarioCreato": "SI",
-                        "DataEventoCreato": datetime.now().strftime("%d/%m/%Y %H:%M"),
-                    },
-                )
-
-            st.success("Eventi segnati come esportati.")
-
-
-# ==========================================================
-# 12. GESTIONE UTENTI
-# ==========================================================
-elif pagina == "Gestione Utenti":
-    st.title("👤 Gestione Utenti")
-
-    if not is_admin:
-        st.warning("Accesso riservato agli amministratori.")
-        st.stop()
-
+def login(username, password):
+    username = str(username).strip()
     utenti = carica_utenti()
 
     if utenti.empty:
-        st.warning("Nessun utente trovato.")
+        st.error("Nessun utente disponibile.")
+        return
+
+    match = utenti[utenti["username"] == username]
+
+    if match.empty:
+        st.error("Credenziali errate")
+        return
+
+    record = match.iloc[0]
+
+    if verifica_bcrypt(password, record["password_hash"]):
+        st.session_state.loggato = True
+        st.session_state.utente = record["username"]
+        st.session_state.ruolo = record["ruolo"]
+        st.rerun()
     else:
-        st.dataframe(
-            utenti[["username", "ruolo"]],
-            use_container_width=True,
-            hide_index=True,
-        )
+        st.error("Credenziali errate")
 
-    st.divider()
-    st.markdown("### Nuovo utente / modifica utente")
 
-    lista_utenti = ["Nuovo utente"]
+def logout():
+    st.session_state.loggato = False
+    st.session_state.utente = None
+    st.session_state.ruolo = "ospite"
+    st.rerun()
 
-    if not utenti.empty:
-        lista_utenti += utenti["username"].tolist()
 
-    scelta = st.selectbox("Seleziona utente", lista_utenti)
+def salva_utente(username, password, ruolo):
+    if not is_admin:
+        return False
 
-    if scelta == "Nuovo utente":
+    username = str(username).strip()
+    ruolo = str(ruolo).strip().lower()
+
+    if not username:
+        st.error("Username obbligatorio.")
+        return False
+
+    if ruolo not in ["admin", "supervisor", "user"]:
+        st.error("Ruolo non valido.")
+        return False
+
+    try:
+        ws = get_ws_by_name(FOGLIO_UTENTI)
+        utenti = carica_utenti()
+
+        match = utenti[utenti["username"] == username]
+
+        if match.empty:
+            if not password:
+                st.error("Password obbligatoria per nuovo utente.")
+                return False
+
+            ws.append_row(
+                [username, genera_hash_password(password), ruolo],
+                value_input_option="USER_ENTERED",
+            )
+
+        else:
+            cell = ws.find(username, in_column=1)
+            row_num = cell.row
+
+            ws.update_cell(row_num, 3, ruolo)
+
+            if password:
+                ws.update_cell(row_num, 2, genera_hash_password(password))
+
+        carica_utenti.clear()
+        return True
+
+    except Exception as e:
+        st.error(f"Errore salvataggio utente: {e}")
+        return False
+
+
+def elimina_utente(username):
+    if not is_admin:
+        return False
+
+    if username == st.session_state.utente:
+        st.error("Non puoi eliminare l'utente con cui sei collegato.")
+        return False
+
+    try:
+        ws = get_ws_by_name(FOGLIO_UTENTI)
+        cell = ws.find(username, in_column=1)
+
+        if cell:
+            ws.delete_rows(cell.row)
+            carica_utenti.clear()
+            return True
+
+        st.error("Utente non trovato.")
+        return False
+
+    except Exception as e:
+        st.error(f"Errore eliminazione utente: {e}")
+        return False
+
+
+# ==========================================================
+# 5. MODELLI MESSAGGI SU GOOGLE SHEET
+# ==========================================================
+MODELLI_DEFAULT = {
+    "mail_fornitore": "commerciale@bgservicebergamo.com",
+    "mail_30_ogg": "Lavaggio FV [CLIENTE]",
+    "mail_30_txt": "Buongiorno, ricordiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "wa_30_txt": "Buongiorno, ricordiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "mail_3_ogg": "Promemoria lavaggio FV [CLIENTE]",
+    "mail_3_txt": "Buongiorno, confermiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "wa_3_txt": "Buongiorno, confermiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "mail_forn_ogg": "Intervento lavaggio FV [CLIENTE]",
+    "mail_forn_txt": "Buongiorno, intervento previsto il [DATA] alle [ORARIO] presso [CLIENTE] - [IMPIANTO].",
+}
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def carica_modelli_sheet():
+    try:
+        ws = get_ws_by_name(FOGLIO_MODELLI)
+        rows = ws.get_all_records()
+
+        modelli = MODELLI_DEFAULT.copy()
+
+        for row in rows:
+            chiave = str(row.get("chiave", "")).strip()
+            valore = str(row.get("valore", ""))
+
+            if chiave:
+                modelli[chiave] = valore
+
+        return modelli
+
+    except Exception as e:
+        st.warning(f"Foglio Modelli non disponibile, uso valori predefiniti: {e}")
+        return MODELLI_DEFAULT.copy()
+
+
+def salva_modelli_sheet(modelli):
+    if not is_admin:
+        st.error("Solo admin può salvare i modelli.")
+        return False
+
+    try:
+        ws = get_ws_by_name(FOGLIO_MODELLI)
+
+        values = [["chiave", "valore"]]
+
+        for chiave, valore in modelli.items():
+            values.append([chiave, valore])
+
+        ws.clear()
+        ws.update(values, value_input_option="USER_ENTERED")
+
+        carica_modelli_sheet.clear()
+        return True
+
+    except Exception as e:
+        st.error(f"Errore salvataggio modelli: {e}")
+        return False
+
+
+def compila_testo(testo, row, data, orario):
+    return (
+        str(testo)
+        .replace("[CLIENTE]", str(row.get("Cliente", "")))
+        .replace("[DATA]", data)
+        .replace("[ORARIO]", str(orario))
+        .replace("[IMPIANTO]", str(row.get("Impianto", "")))
+    )
+
+
+def valore_invio(v):
+    return str(v).strip() if pd.notna(v) and str(v).strip() else "—"
+
+
+def classe_stato(stato):
+    stato = str(stato).upper().strip()
+    if "AVVISATO" in stato:
+        return "status-avvisato"
+    if "CONFERMATO" in stato:
+        return "status-confermato"
+    if "FATTO" in stato:
+        return "status-fatto"
+    if "ANNULLATO" in stato:
+        return "status-annullato"
+    return "status-da-programmare"
+
+
+def badge_stato(stato):
+    return (
+        f'<div class="status-badge {classe_stato(stato)}">'
+        f'{str(stato).upper()}'
+        "</div>"
+    )
+
+
+# ==========================================================
+# 6. SESSIONE
+# ==========================================================
+if "loggato" not in st.session_state:
+    st.session_state.loggato = False
+
+if "utente" not in st.session_state:
+    st.session_state.utente = None
+
+if "ruolo" not in st.session_state:
+    st.session_state.ruolo = "ospite"
+
+if "df" not in st.session_state:
+    st.session_state.df = carica_dati()
+
+if "selected_idx" not in st.session_state:
+    st.session_state.selected_idx = None
+
+if "dash_filter" not in st.session_state:
+    st.session_state.dash_filter = "Tutti"
+
+if "modelli" not in st.session_state:
+    st.session_state.modelli = carica_modelli_sheet()
+
+
+is_admin = st.session_state.ruolo == "admin"
+can_edit_client = st.session_state.ruolo in ["admin", "supervisor"]
+can_send_comms = st.session_state.ruolo in ["admin", "supervisor"]
+
+
+# ==========================================================
+# 7. SIDEBAR
+# ==========================================================
+with st.sidebar:
+    st.markdown("### 🧼 FV WASH MANAGER")
+
+    if not st.session_state.loggato:
         username = st.text_input("Username")
-        ruolo = st.selectbox("Ruolo", ["user", "supervisor", "admin"])
         password = st.text_input("Password", type="password")
-        conferma = st.text_input("Conferma password", type="password")
 
-        if st.button("➕ CREA UTENTE", type="primary"):
-            if password != conferma:
-                st.error("Le password non coincidono.")
-            elif salva_utente(username, password, ruolo):
-                st.success("Utente creato.")
-                st.rerun()
-
-    else:
-        record = utenti[utenti["username"] == scelta].iloc[0]
-
-        username = st.text_input("Username", record["username"], disabled=True)
-
-        ruolo_corrente = record["ruolo"] if record["ruolo"] in ["user", "supervisor", "admin"] else "user"
-
-        ruolo = st.selectbox(
-            "Ruolo",
-            ["user", "supervisor", "admin"],
-            index=["user", "supervisor", "admin"].index(ruolo_corrente),
-        )
-
-        st.info("Lascia vuota la password se vuoi modificare solo il ruolo.")
-
-        nuova_password = st.text_input("Nuova password", type="password")
-        conferma_password = st.text_input("Conferma nuova password", type="password")
-
-        c1, c2 = st.columns(2)
-
-        with c1:
-            if st.button("💾 SALVA MODIFICHE", type="primary"):
-                if nuova_password and nuova_password != conferma_password:
-                    st.error("Le password non coincidono.")
-                elif salva_utente(username, nuova_password, ruolo):
-                    st.success("Utente aggiornato.")
-                    st.rerun()
-
-        with c2:
-            if st.button("🗑️ ELIMINA UTENTE"):
-                if elimina_utente(username):
-                    st.success("Utente eliminato.")
-                    st.rerun()
-
-
-# ==========================================================
-# 13. IMPOSTAZIONI
-# ==========================================================
-elif pagina == "Impostazioni":
-    st.title("⚙️ Diagnostica")
-
-    st.write(f"Utente: **{st.session_state.utente or 'ospite'}**")
-    st.write(f"Ruolo: **{st.session_state.ruolo}**")
-    st.write(f"Foglio lavaggi: **{FOGLIO_LAVAGGI}**")
-    st.write(f"Foglio utenti: **{FOGLIO_UTENTI}**")
-    st.write(f"Foglio modelli: **{FOGLIO_MODELLI}**")
-
-    st.dataframe(df, use_container_width=True)
+        if st.button("🔐 Login"):
+            login(username, password)
