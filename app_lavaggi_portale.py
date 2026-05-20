@@ -5,7 +5,6 @@ import re
 import urllib.parse
 import bcrypt
 from datetime import date, datetime, timedelta
-from pathlib import Path
 
 import gspread
 import pandas as pd
@@ -23,9 +22,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-BASE_DIR = Path(__file__).resolve().parent
-FILE_MODELLI = BASE_DIR / "modelli_messaggi.json"
-
 SHEET_ID = st.secrets.get("google_sheet", {}).get(
     "spreadsheet_id",
     "16RUw8kcZRurs_LYP9WCGbbLiXZnHEhw_lLEsdlS5Zuc",
@@ -33,6 +29,7 @@ SHEET_ID = st.secrets.get("google_sheet", {}).get(
 
 FOGLIO_LAVAGGI = st.secrets.get("google_sheet", {}).get("worksheet_name", "Lavaggi")
 FOGLIO_UTENTI = st.secrets.get("google_sheet", {}).get("users_worksheet_name", "Utenti")
+FOGLIO_MODELLI = st.secrets.get("google_sheet", {}).get("models_worksheet_name", "Modelli")
 
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 
@@ -43,7 +40,7 @@ SCOPES = [
 
 
 # ==========================================================
-# 2. STILE
+# 2. CSS
 # ==========================================================
 st.markdown("""
 <style>
@@ -84,11 +81,7 @@ st.markdown("""
         color: #f8fafc !important;
     }
 
-    [data-testid="stSidebar"] input {
-        color: #0f172a !important;
-        background: #ffffff !important;
-    }
-
+    [data-testid="stSidebar"] input,
     [data-testid="stSidebar"] .stTextInput input {
         color: #0f172a !important;
         background: #ffffff !important;
@@ -112,17 +105,10 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    [data-testid="stSidebar"] a {
-        color: #0f172a !important;
-        background: #ffffff !important;
-        border-radius: 10px !important;
-        font-weight: 800 !important;
-        border: 1px solid #cbd5e1 !important;
-        text-decoration: none !important;
-    }
-
+    [data-testid="stSidebar"] a,
     [data-testid="stSidebar"] a * {
         color: #0f172a !important;
+        font-weight: 800 !important;
     }
 
     .kpi-btn button {
@@ -158,39 +144,6 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
 
-    .status-container {
-        padding: 8px 15px;
-        border-radius: 10px;
-        font-weight: 700;
-        text-align: center;
-        font-size: 13px;
-    }
-
-    .st-da-programmare {
-        background: #f1f5f9;
-        color: #475569;
-    }
-
-    .st-avvisato {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .st-confermato {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .st-fatto {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .st-annullato {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
     .action-link {
         display: block;
         text-align: center;
@@ -202,23 +155,13 @@ st.markdown("""
         margin-top: 8px;
     }
 
-    .action-link * {
-        color: white !important;
-    }
-
-    .action-mail {
-        background: #2563eb;
-    }
-
-    .action-wa {
-        background: #16a34a;
-    }
-
-    .action-supplier {
-        background: #475569;
-    }
+    .action-mail { background: #2563eb; }
+    .action-wa { background: #16a34a; }
+    .action-supplier { background: #475569; }
 </style>
 """, unsafe_allow_html=True)
+
+
 # ==========================================================
 # 3. GOOGLE SHEETS
 # ==========================================================
@@ -255,25 +198,11 @@ def carica_dati():
         df.columns = [normalizza_nome_colonna(c) for c in df.columns]
 
         colonne = [
-            "Cliente",
-            "Impianto",
-            "DataLavaggio",
-            "Orario",
-            "Telefono",
-            "EmailCliente",
-            "Stato",
-            "Fornitore",
-            "Promemoria30gg",
-            "DataPromemoria",
-            "Promemoria3gg",
-            "DataPromemoria3gg",
-            "DataWA30gg",
-            "DataWA3gg",
-            "Note",
-            "EventoCalendarioCreato",
-            "DataEventoCreato",
-            "Task_Rem",
-            "Task_Due",
+            "Cliente", "Impianto", "DataLavaggio", "Orario", "Telefono",
+            "EmailCliente", "Stato", "Fornitore", "Promemoria30gg",
+            "DataPromemoria", "Promemoria3gg", "DataPromemoria3gg",
+            "DataWA30gg", "DataWA3gg", "Note", "EventoCalendarioCreato",
+            "DataEventoCreato", "Task_Rem", "Task_Due",
         ]
 
         for col in colonne:
@@ -281,15 +210,11 @@ def carica_dati():
                 df[col] = ""
 
         df["DataLavaggio_DT"] = pd.to_datetime(
-            df["DataLavaggio"],
-            errors="coerce",
-            dayfirst=True,
+            df["DataLavaggio"], errors="coerce", dayfirst=True
         ).dt.date
 
         df["Task_Due_DT"] = pd.to_datetime(
-            df["Task_Due"],
-            errors="coerce",
-            dayfirst=True,
+            df["Task_Due"], errors="coerce", dayfirst=True
         ).dt.date
 
         df["GiorniMancanti"] = df["DataLavaggio_DT"].apply(
@@ -322,10 +247,7 @@ def salva_sheet(idx, mappa):
             col = hdr_map.get(normalizza_nome_colonna(k).lower())
             if col:
                 cella = gspread.utils.rowcol_to_a1(int(idx) + 2, col)
-                updates.append({
-                    "range": cella,
-                    "values": [[str(v)]],
-                })
+                updates.append({"range": cella, "values": [[str(v)]]})
 
         if updates:
             ws.batch_update(updates, value_input_option="USER_ENTERED")
@@ -338,7 +260,7 @@ def salva_sheet(idx, mappa):
 
 
 # ==========================================================
-# 4. AUTENTICAZIONE DA FOGLIO UTENTI
+# 4. AUTENTICAZIONE E UTENTI
 # ==========================================================
 @st.cache_data(ttl=300, show_spinner=False)
 def carica_utenti():
@@ -353,7 +275,7 @@ def carica_utenti():
 
         required = {"username", "password_hash", "ruolo"}
         if not required.issubset(set(utenti.columns)):
-            st.error("Il foglio utenti deve avere le colonne: username, password_hash, ruolo")
+            st.error("Il foglio Utenti deve avere le colonne: username, password_hash, ruolo")
             return pd.DataFrame()
 
         utenti["username"] = utenti["username"].astype(str).str.strip()
@@ -365,6 +287,13 @@ def carica_utenti():
     except Exception as e:
         st.error(f"Errore caricamento utenti: {e}")
         return pd.DataFrame()
+
+
+def genera_hash_password(password):
+    return bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt(),
+    ).decode("utf-8")
 
 
 def verifica_bcrypt(password, password_hash):
@@ -413,8 +342,157 @@ def logout():
     st.rerun()
 
 
+def salva_utente(username, password, ruolo):
+    if not is_admin:
+        return False
+
+    username = str(username).strip()
+    ruolo = str(ruolo).strip().lower()
+
+    if not username:
+        st.error("Username obbligatorio.")
+        return False
+
+    if ruolo not in ["admin", "supervisor", "user"]:
+        st.error("Ruolo non valido.")
+        return False
+
+    try:
+        ws = get_ws_by_name(FOGLIO_UTENTI)
+        utenti = carica_utenti()
+
+        match = utenti[utenti["username"] == username]
+
+        if match.empty:
+            if not password:
+                st.error("Password obbligatoria per nuovo utente.")
+                return False
+
+            ws.append_row(
+                [username, genera_hash_password(password), ruolo],
+                value_input_option="USER_ENTERED",
+            )
+
+        else:
+            cell = ws.find(username, in_column=1)
+            row_num = cell.row
+
+            ws.update_cell(row_num, 3, ruolo)
+
+            if password:
+                ws.update_cell(row_num, 2, genera_hash_password(password))
+
+        carica_utenti.clear()
+        return True
+
+    except Exception as e:
+        st.error(f"Errore salvataggio utente: {e}")
+        return False
+
+
+def elimina_utente(username):
+    if not is_admin:
+        return False
+
+    if username == st.session_state.utente:
+        st.error("Non puoi eliminare l'utente con cui sei collegato.")
+        return False
+
+    try:
+        ws = get_ws_by_name(FOGLIO_UTENTI)
+        cell = ws.find(username, in_column=1)
+
+        if cell:
+            ws.delete_rows(cell.row)
+            carica_utenti.clear()
+            return True
+
+        st.error("Utente non trovato.")
+        return False
+
+    except Exception as e:
+        st.error(f"Errore eliminazione utente: {e}")
+        return False
+
+
 # ==========================================================
-# 5. SESSIONE E MODELLI
+# 5. MODELLI MESSAGGI SU GOOGLE SHEET
+# ==========================================================
+MODELLI_DEFAULT = {
+    "mail_fornitore": "commerciale@bgservicebergamo.com",
+    "mail_30_ogg": "Lavaggio FV [CLIENTE]",
+    "mail_30_txt": "Buongiorno, ricordiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "wa_30_txt": "Buongiorno, ricordiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "mail_3_ogg": "Promemoria lavaggio FV [CLIENTE]",
+    "mail_3_txt": "Buongiorno, confermiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "wa_3_txt": "Buongiorno, confermiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "mail_forn_ogg": "Intervento lavaggio FV [CLIENTE]",
+    "mail_forn_txt": "Buongiorno, intervento previsto il [DATA] alle [ORARIO] presso [CLIENTE] - [IMPIANTO].",
+}
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def carica_modelli_sheet():
+    try:
+        ws = get_ws_by_name(FOGLIO_MODELLI)
+        rows = ws.get_all_records()
+
+        modelli = MODELLI_DEFAULT.copy()
+
+        for row in rows:
+            chiave = str(row.get("chiave", "")).strip()
+            valore = str(row.get("valore", ""))
+
+            if chiave:
+                modelli[chiave] = valore
+
+        return modelli
+
+    except Exception as e:
+        st.warning(f"Foglio Modelli non disponibile, uso valori predefiniti: {e}")
+        return MODELLI_DEFAULT.copy()
+
+
+def salva_modelli_sheet(modelli):
+    if not is_admin:
+        st.error("Solo admin può salvare i modelli.")
+        return False
+
+    try:
+        ws = get_ws_by_name(FOGLIO_MODELLI)
+
+        values = [["chiave", "valore"]]
+
+        for chiave, valore in modelli.items():
+            values.append([chiave, valore])
+
+        ws.clear()
+        ws.update(values, value_input_option="USER_ENTERED")
+
+        carica_modelli_sheet.clear()
+        return True
+
+    except Exception as e:
+        st.error(f"Errore salvataggio modelli: {e}")
+        return False
+
+
+def compila_testo(testo, row, data, orario):
+    return (
+        str(testo)
+        .replace("[CLIENTE]", str(row.get("Cliente", "")))
+        .replace("[DATA]", data)
+        .replace("[ORARIO]", str(orario))
+        .replace("[IMPIANTO]", str(row.get("Impianto", "")))
+    )
+
+
+def valore_invio(v):
+    return str(v).strip() if pd.notna(v) and str(v).strip() else "—"
+
+
+# ==========================================================
+# 6. SESSIONE
 # ==========================================================
 if "loggato" not in st.session_state:
     st.session_state.loggato = False
@@ -434,49 +512,17 @@ if "selected_idx" not in st.session_state:
 if "dash_filter" not in st.session_state:
     st.session_state.dash_filter = "Tutti"
 
+if "modelli" not in st.session_state:
+    st.session_state.modelli = carica_modelli_sheet()
+
 
 is_admin = st.session_state.ruolo == "admin"
 can_edit_client = st.session_state.ruolo in ["admin", "supervisor"]
 can_send_comms = st.session_state.ruolo in ["admin", "supervisor"]
 
 
-MODELLI_DEFAULT = {
-    "mail_fornitore": "commerciale@bgservicebergamo.com",
-    "mail_30_ogg": "Lavaggio FV [CLIENTE]",
-    "mail_30_txt": "Buongiorno, ricordiamo il lavaggio previsto il [DATA] alle [ORARIO].",
-    "wa_30_txt": "Buongiorno, ricordiamo il lavaggio previsto il [DATA] alle [ORARIO].",
-    "mail_3_ogg": "Promemoria lavaggio FV [CLIENTE]",
-    "mail_3_txt": "Buongiorno, confermiamo il lavaggio previsto il [DATA] alle [ORARIO].",
-    "wa_3_txt": "Buongiorno, confermiamo il lavaggio previsto il [DATA] alle [ORARIO].",
-    "mail_forn_ogg": "Intervento lavaggio FV [CLIENTE]",
-    "mail_forn_txt": "Buongiorno, intervento previsto il [DATA] alle [ORARIO] presso [CLIENTE] - [IMPIANTO].",
-}
-
-if FILE_MODELLI.exists():
-    with open(FILE_MODELLI, "r", encoding="utf-8") as f:
-        modelli = MODELLI_DEFAULT | json.load(f)
-else:
-    modelli = MODELLI_DEFAULT
-
-st.session_state.modelli = modelli
-
-
-def compila_testo(testo, row, data, orario):
-    return (
-        str(testo)
-        .replace("[CLIENTE]", str(row.get("Cliente", "")))
-        .replace("[DATA]", data)
-        .replace("[ORARIO]", str(orario))
-        .replace("[IMPIANTO]", str(row.get("Impianto", "")))
-    )
-
-
-def valore_invio(v):
-    return str(v).strip() if pd.notna(v) and str(v).strip() else "—"
-
-
 # ==========================================================
-# 6. SIDEBAR
+# 7. SIDEBAR
 # ==========================================================
 with st.sidebar:
     st.markdown("### 🧼 FV WASH MANAGER")
@@ -512,12 +558,14 @@ with st.sidebar:
 
     if st.button("🔄 Aggiorna Dati"):
         carica_utenti.clear()
+        carica_modelli_sheet.clear()
+        st.session_state.modelli = carica_modelli_sheet()
         st.session_state.df = carica_dati()
         st.rerun()
 
 
 # ==========================================================
-# 7. DASHBOARD
+# 8. DASHBOARD
 # ==========================================================
 df = st.session_state.df
 
@@ -576,27 +624,18 @@ if pagina == "Dashboard":
         st.divider()
 
     df_tutti = df.sort_values(by="Cliente")
-    df_conf = df[df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE"].sort_values(
-        by="DataLavaggio_DT",
-        na_position="last",
-    )
+    df_conf = df[df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE"]
     df_urg = df[
         (df["GiorniMancanti"].between(0, 15))
         & (df["Stato"].astype(str).str.upper() != "FATTO")
         & (df["Stato"].astype(str).str.upper() != "CONFERMATO DA CLIENTE")
-    ].sort_values(by="DataLavaggio_DT", na_position="last")
-    df_comp = df[df["Stato"].astype(str).str.upper() == "FATTO"].sort_values(
-        by="DataLavaggio_DT",
-        na_position="last",
-    )
+    ]
+    df_comp = df[df["Stato"].astype(str).str.upper() == "FATTO"]
     df_da_fare = df[
         (df["Stato"].astype(str).str.upper() != "FATTO")
         & (df["Stato"].astype(str).str.upper() != "ANNULLATO DA CLIENTE")
-    ].sort_values(by="DataLavaggio_DT", na_position="last")
-    df_annullati = df[df["Stato"].astype(str).str.upper() == "ANNULLATO DA CLIENTE"].sort_values(
-        by="DataLavaggio_DT",
-        na_position="last",
-    )
+    ]
+    df_annullati = df[df["Stato"].astype(str).str.upper() == "ANNULLATO DA CLIENTE"]
 
     k_cols = st.columns(6)
     kpis = [
@@ -697,22 +736,10 @@ if pagina == "Dashboard":
                 "border:1px solid #e2e8f0; text-align:center; line-height:1.4;"
             )
 
-            i1.markdown(
-                f"<div style='{box_style}'><b>Mail 30gg</b><br>{valore_invio(row.get('DataPromemoria',''))}</div>",
-                unsafe_allow_html=True,
-            )
-            i2.markdown(
-                f"<div style='{box_style}'><b>WA 30gg</b><br>{valore_invio(row.get('DataWA30gg',''))}</div>",
-                unsafe_allow_html=True,
-            )
-            i3.markdown(
-                f"<div style='{box_style}'><b>Mail 3gg</b><br>{valore_invio(row.get('DataPromemoria3gg',''))}</div>",
-                unsafe_allow_html=True,
-            )
-            i4.markdown(
-                f"<div style='{box_style}'><b>WA 3gg</b><br>{valore_invio(row.get('DataWA3gg',''))}</div>",
-                unsafe_allow_html=True,
-            )
+            i1.markdown(f"<div style='{box_style}'><b>Mail 30gg</b><br>{valore_invio(row.get('DataPromemoria',''))}</div>", unsafe_allow_html=True)
+            i2.markdown(f"<div style='{box_style}'><b>WA 30gg</b><br>{valore_invio(row.get('DataWA30gg',''))}</div>", unsafe_allow_html=True)
+            i3.markdown(f"<div style='{box_style}'><b>Mail 3gg</b><br>{valore_invio(row.get('DataPromemoria3gg',''))}</div>", unsafe_allow_html=True)
+            i4.markdown(f"<div style='{box_style}'><b>WA 3gg</b><br>{valore_invio(row.get('DataWA3gg',''))}</div>", unsafe_allow_html=True)
 
             st.write("")
 
@@ -732,6 +759,7 @@ if pagina == "Dashboard":
                 "FATTO",
                 "ANNULLATO DA CLIENTE",
             ]
+
             curr_st = row["Stato"] if row["Stato"] in stati else "DA PROGRAMMARE"
             n_st = c5.selectbox("Stato", stati, index=stati.index(curr_st), disabled=not can_edit_client)
 
@@ -798,10 +826,7 @@ if pagina == "Dashboard":
                 if salva_sheet(st.session_state.selected_idx, aggiornamenti):
                     st.session_state.df = carica_dati()
                     url = f"mailto:{n_ml}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}"
-                    st.markdown(
-                        f'<a href="{url}" target="_blank" class="action-link action-mail">APRI EMAIL</a>',
-                        unsafe_allow_html=True,
-                    )
+                    st.markdown(f'<a href="{url}" target="_blank" class="action-link action-mail">APRI EMAIL</a>', unsafe_allow_html=True)
 
             if cb.button(f"💬 WhatsApp {tipo}gg", disabled=not can_send_comms):
                 txt = compila_testo(mod[f"wa_{tipo}_txt"], row, data_txt, n_or)
@@ -826,34 +851,27 @@ if pagina == "Dashboard":
                 if salva_sheet(st.session_state.selected_idx, aggiornamenti):
                     st.session_state.df = carica_dati()
                     url = f"https://wa.me/{num}?text={urllib.parse.quote(txt)}"
-                    st.markdown(
-                        f'<a href="{url}" target="_blank" class="action-link action-wa">APRI WHATSAPP</a>',
-                        unsafe_allow_html=True,
-                    )
+                    st.markdown(f'<a href="{url}" target="_blank" class="action-link action-wa">APRI WHATSAPP</a>', unsafe_allow_html=True)
 
-            if cc.button(
-                "👷 Email Fornitore",
-                disabled=not can_send_comms or n_st != "CONFERMATO DA CLIENTE",
-            ):
+            if cc.button("👷 Email Fornitore", disabled=not can_send_comms or n_st != "CONFERMATO DA CLIENTE"):
                 ogg = compila_testo(mod["mail_forn_ogg"], row, data_txt, n_or)
                 txt = compila_testo(mod["mail_forn_txt"], row, data_txt, n_or)
                 url = f"mailto:{mod['mail_fornitore']}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}"
-
-                st.markdown(
-                    f'<a href="{url}" target="_blank" class="action-link action-supplier">AVVISA FORNITORE</a>',
-                    unsafe_allow_html=True,
-                )
+                st.markdown(f'<a href="{url}" target="_blank" class="action-link action-supplier">AVVISA FORNITORE</a>', unsafe_allow_html=True)
 
             st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ==========================================================
-# 8. MODELLI MESSAGGI
+# 9. MODELLI MESSAGGI
 # ==========================================================
 elif pagina == "Modelli Messaggi":
     st.title("📝 Modelli Messaggi")
 
-    mod = st.session_state.modelli
+    mod = st.session_state.modelli.copy()
+
+    if not is_admin:
+        st.info("Solo admin può modificare i modelli. Gli altri utenti possono consultarli.")
 
     mod["mail_fornitore"] = st.text_input(
         "Email Fornitore",
@@ -864,60 +882,29 @@ elif pagina == "Modelli Messaggi":
     with st.expander("Email Clienti", expanded=True):
         c1, c2 = st.columns(2)
 
-        mod["mail_30_ogg"] = c1.text_input(
-            "Oggetto 30gg",
-            mod["mail_30_ogg"],
-            disabled=not is_admin,
-        )
-        mod["mail_30_txt"] = c1.text_area(
-            "Testo 30gg",
-            mod["mail_30_txt"],
-            disabled=not is_admin,
-        )
-        mod["mail_3_ogg"] = c2.text_input(
-            "Oggetto 3gg",
-            mod["mail_3_ogg"],
-            disabled=not is_admin,
-        )
-        mod["mail_3_txt"] = c2.text_area(
-            "Testo 3gg",
-            mod["mail_3_txt"],
-            disabled=not is_admin,
-        )
+        mod["mail_30_ogg"] = c1.text_input("Oggetto 30gg", mod.get("mail_30_ogg", ""), disabled=not is_admin)
+        mod["mail_30_txt"] = c1.text_area("Testo 30gg", mod.get("mail_30_txt", ""), disabled=not is_admin)
+
+        mod["mail_3_ogg"] = c2.text_input("Oggetto 3gg", mod.get("mail_3_ogg", ""), disabled=not is_admin)
+        mod["mail_3_txt"] = c2.text_area("Testo 3gg", mod.get("mail_3_txt", ""), disabled=not is_admin)
 
     with st.expander("WhatsApp", expanded=True):
-        mod["wa_30_txt"] = st.text_area(
-            "WhatsApp 30gg",
-            mod["wa_30_txt"],
-            disabled=not is_admin,
-        )
-        mod["wa_3_txt"] = st.text_area(
-            "WhatsApp 3gg",
-            mod["wa_3_txt"],
-            disabled=not is_admin,
-        )
+        mod["wa_30_txt"] = st.text_area("WhatsApp 30gg", mod.get("wa_30_txt", ""), disabled=not is_admin)
+        mod["wa_3_txt"] = st.text_area("WhatsApp 3gg", mod.get("wa_3_txt", ""), disabled=not is_admin)
 
     with st.expander("Fornitore", expanded=True):
-        mod["mail_forn_ogg"] = st.text_input(
-            "Oggetto Fornitore",
-            mod["mail_forn_ogg"],
-            disabled=not is_admin,
-        )
-        mod["mail_forn_txt"] = st.text_area(
-            "Testo Fornitore",
-            mod["mail_forn_txt"],
-            disabled=not is_admin,
-        )
+        mod["mail_forn_ogg"] = st.text_input("Oggetto Fornitore", mod.get("mail_forn_ogg", ""), disabled=not is_admin)
+        mod["mail_forn_txt"] = st.text_area("Testo Fornitore", mod.get("mail_forn_txt", ""), disabled=not is_admin)
 
     if st.button("💾 SALVA MODELLI", type="primary", disabled=not is_admin):
-        with open(FILE_MODELLI, "w", encoding="utf-8") as f:
-            json.dump(mod, f, indent=4, ensure_ascii=False)
-
-        st.success("Modelli salvati.")
+        if salva_modelli_sheet(mod):
+            st.session_state.modelli = carica_modelli_sheet()
+            st.success("Modelli salvati su Google Sheet.")
+            st.rerun()
 
 
 # ==========================================================
-# 9. FORNITORI
+# 10. FORNITORI
 # ==========================================================
 elif pagina == "Fornitori":
     st.title("👷 Resoconto Fornitore")
@@ -944,21 +931,16 @@ elif pagina == "Fornitori":
 
         if st.button("Genera Email Fornitore", disabled=not can_send_comms):
             st.code(testo)
-
             url = (
                 f"mailto:{st.session_state.modelli['mail_fornitore']}"
                 f"?subject=Riepilogo Lavaggi 30gg"
                 f"&body={urllib.parse.quote(testo)}"
             )
-
-            st.markdown(
-                f'<a href="{url}" target="_blank" class="action-link action-supplier">INVIA AL FORNITORE</a>',
-                unsafe_allow_html=True,
-            )
+            st.markdown(f'<a href="{url}" target="_blank" class="action-link action-supplier">INVIA AL FORNITORE</a>', unsafe_allow_html=True)
 
 
 # ==========================================================
-# 10. CALENDARIO
+# 11. CALENDARIO
 # ==========================================================
 elif pagina == "Calendario":
     st.title("📅 Esporta Calendario")
@@ -988,12 +970,7 @@ elif pagina == "Calendario":
 
         ics += "END:VCALENDAR"
 
-        if st.download_button(
-            "Scarica .ics",
-            ics,
-            "lavaggi.ics",
-            disabled=not can_send_comms,
-        ):
+        if st.download_button("Scarica .ics", ics, "lavaggi.ics", disabled=not can_send_comms):
             for i in conf.index:
                 salva_sheet(
                     i,
@@ -1007,7 +984,7 @@ elif pagina == "Calendario":
 
 
 # ==========================================================
-# 11. GESTIONE UTENTI
+# 12. GESTIONE UTENTI
 # ==========================================================
 elif pagina == "Gestione Utenti":
     st.title("👤 Gestione Utenti")
@@ -1024,16 +1001,69 @@ elif pagina == "Gestione Utenti":
         st.dataframe(
             utenti[["username", "ruolo"]],
             use_container_width=True,
+            hide_index=True,
         )
 
-    st.info(
-        "Le password sono salvate come hash bcrypt nel foglio utenti. "
-        "Il foglio deve avere colonne: username, password_hash, ruolo."
-    )
+    st.divider()
+    st.markdown("### Nuovo utente / modifica utente")
+
+    lista_utenti = ["Nuovo utente"]
+
+    if not utenti.empty:
+        lista_utenti += utenti["username"].tolist()
+
+    scelta = st.selectbox("Seleziona utente", lista_utenti)
+
+    if scelta == "Nuovo utente":
+        username = st.text_input("Username")
+        ruolo = st.selectbox("Ruolo", ["user", "supervisor", "admin"])
+        password = st.text_input("Password", type="password")
+        conferma = st.text_input("Conferma password", type="password")
+
+        if st.button("➕ CREA UTENTE", type="primary"):
+            if password != conferma:
+                st.error("Le password non coincidono.")
+            elif salva_utente(username, password, ruolo):
+                st.success("Utente creato.")
+                st.rerun()
+
+    else:
+        record = utenti[utenti["username"] == scelta].iloc[0]
+
+        username = st.text_input("Username", record["username"], disabled=True)
+
+        ruolo_corrente = record["ruolo"] if record["ruolo"] in ["user", "supervisor", "admin"] else "user"
+
+        ruolo = st.selectbox(
+            "Ruolo",
+            ["user", "supervisor", "admin"],
+            index=["user", "supervisor", "admin"].index(ruolo_corrente),
+        )
+
+        st.info("Lascia vuota la password se vuoi modificare solo il ruolo.")
+
+        nuova_password = st.text_input("Nuova password", type="password")
+        conferma_password = st.text_input("Conferma nuova password", type="password")
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            if st.button("💾 SALVA MODIFICHE", type="primary"):
+                if nuova_password and nuova_password != conferma_password:
+                    st.error("Le password non coincidono.")
+                elif salva_utente(username, nuova_password, ruolo):
+                    st.success("Utente aggiornato.")
+                    st.rerun()
+
+        with c2:
+            if st.button("🗑️ ELIMINA UTENTE"):
+                if elimina_utente(username):
+                    st.success("Utente eliminato.")
+                    st.rerun()
 
 
 # ==========================================================
-# 12. IMPOSTAZIONI
+# 13. IMPOSTAZIONI
 # ==========================================================
 elif pagina == "Impostazioni":
     st.title("⚙️ Diagnostica")
@@ -1042,5 +1072,6 @@ elif pagina == "Impostazioni":
     st.write(f"Ruolo: **{st.session_state.ruolo}**")
     st.write(f"Foglio lavaggi: **{FOGLIO_LAVAGGI}**")
     st.write(f"Foglio utenti: **{FOGLIO_UTENTI}**")
+    st.write(f"Foglio modelli: **{FOGLIO_MODELLI}**")
 
     st.dataframe(df, use_container_width=True)
