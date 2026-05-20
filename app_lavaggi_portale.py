@@ -830,14 +830,16 @@ if pagina == "Dashboard":
 
             curr_st = row["Stato"] if row["Stato"] in stati else "DA PROGRAMMARE"
 
-with c5:
-    n_st = st.selectbox(
-        "Stato",
-        stati,
-        index=stati.index(curr_st),
-        disabled=not can_edit_client,
-    )
-    st.markdown(badge_stato(n_st), unsafe_allow_html=True)
+            with c5:
+                st.markdown(badge_stato(curr_st), unsafe_allow_html=True)
+                n_st = st.selectbox(
+                    "Stato",
+                    stati,
+                    index=stati.index(curr_st),
+                    disabled=not can_edit_client,
+                    label_visibility="collapsed",
+                )
+                st.markdown(badge_stato(n_st), unsafe_allow_html=True)
 
             c6, c7 = st.columns(2)
             n_tel = c6.text_input("Telefono", row["Telefono"], disabled=not can_edit_client)
