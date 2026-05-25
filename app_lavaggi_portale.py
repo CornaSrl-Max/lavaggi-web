@@ -927,7 +927,7 @@ if pagina == "Dashboard":
                     {
                         "Cliente": n_cl,
                         "Impianto": n_im,
-                        "DataLavaggio": "" if cancella_data_lavaggio else n_dt.strftime("%d/%m/%Y"),
+                        "DataLavaggio": "" if cancella_data_lavaggio or n_dt is None else n_dt.strftime("%d/%m/%Y"),
                         "Orario": "" if cancella_data_lavaggio else n_or,
                         "Stato": n_st,
                         "Telefono": n_tel,
