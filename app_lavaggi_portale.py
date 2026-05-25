@@ -710,30 +710,30 @@ if pagina == "Dashboard":
 
         st.divider()
 
-df_tutti = ordina_per_cliente(df)
+    df_tutti = ordina_per_cliente(df)
 
-df_conf = ordina_per_data_lavaggio(
-    df[df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE"]
-)
+    df_conf = ordina_per_data_lavaggio(
+        df[df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE"]
+    )
 
-df_urg = ordina_per_data_lavaggio(df[
-    (df["GiorniMancanti"].between(0, 15))
-    & (df["Stato"].astype(str).str.upper() != "FATTO")
-    & (df["Stato"].astype(str).str.upper() != "CONFERMATO DA CLIENTE")
-])
+    df_urg = ordina_per_data_lavaggio(df[
+        (df["GiorniMancanti"].between(0, 15))
+        & (df["Stato"].astype(str).str.upper() != "FATTO")
+        & (df["Stato"].astype(str).str.upper() != "CONFERMATO DA CLIENTE")
+    ])
 
-df_comp = ordina_per_data_lavaggio(
-    df[df["Stato"].astype(str).str.upper() == "FATTO"]
-)
+    df_comp = ordina_per_data_lavaggio(
+        df[df["Stato"].astype(str).str.upper() == "FATTO"]
+    )
 
-df_da_fare = ordina_per_data_lavaggio(df[
-    (df["Stato"].astype(str).str.upper() != "FATTO")
-    & (df["Stato"].astype(str).str.upper() != "ANNULLATO DA CLIENTE")
-])
+    df_da_fare = ordina_per_data_lavaggio(df[
+        (df["Stato"].astype(str).str.upper() != "FATTO")
+        & (df["Stato"].astype(str).str.upper() != "ANNULLATO DA CLIENTE")
+    ])
 
-df_annullati = ordina_per_data_lavaggio(
-    df[df["Stato"].astype(str).str.upper() == "ANNULLATO DA CLIENTE"]
-)
+    df_annullati = ordina_per_data_lavaggio(
+        df[df["Stato"].astype(str).str.upper() == "ANNULLATO DA CLIENTE"]
+    )
     k_cols = st.columns(6)
     kpis = [
         ("Tutti", "📋", len(df_tutti)),
