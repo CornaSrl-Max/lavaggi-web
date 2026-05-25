@@ -852,9 +852,28 @@ if pagina == "Dashboard":
             n_im = c2.text_input("Impianto", row["Impianto"], disabled=not can_edit_client)
 
             c3, c4, c5 = st.columns(3)
+
             d_dt = row["DataLavaggio_DT"] if pd.notna(row["DataLavaggio_DT"]) else date.today()
-            n_dt = c3.date_input("Data Lavaggio", d_dt, format="DD/MM/YYYY", disabled=not can_edit_client)
-            n_or = c4.text_input("Orario", row["Orario"], disabled=not can_edit_client)
+
+            cancella_data_lavaggio = c3.checkbox(
+                "Cancella data",
+                value=False,
+                disabled=not can_edit_client,
+                key=f"clear_data_lavaggio_{st.session_state.selected_idx}",
+            )
+
+            n_dt = c3.date_input(
+                "Data Lavaggio",
+                d_dt,
+                format="DD/MM/YYYY",
+                disabled=not can_edit_client or cancella_data_lavaggio,
+            )
+
+            n_or = c4.text_input(
+                "Orario",
+                row["Orario"],
+                disabled=not can_edit_client,
+            )
 
             stati = [
                 "DA PROGRAMMARE",
@@ -908,8 +927,8 @@ if pagina == "Dashboard":
                     {
                         "Cliente": n_cl,
                         "Impianto": n_im,
-                        "DataLavaggio": n_dt.strftime("%d/%m/%Y"),
-                        "Orario": n_or,
+                        "DataLavaggio": "" if cancella_data_lavaggio else n_dt.strftime("%d/%m/%Y"),
+                        "Orario": "" if cancella_data_lavaggio else n_or,
                         "Stato": n_st,
                         "Telefono": n_tel,
                         "EmailCliente": n_ml,
