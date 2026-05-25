@@ -1,178 +1,99 @@
-    st.title("👷 Resoconto Fornitore")
+# -*- coding: utf-8 -*-
 
-    limite = date.today() + timedelta(days=30)
-    fornitori = ["Tutti"]
-    if "Fornitore" in df.columns:
-        fornitori += sorted([f for f in df["Fornitore"].astype(str).str.strip().unique().tolist() if f], key=str.upper)
-    filtro_fornitore_f = st.selectbox("Fornitore", fornitori)
+import re
+import urllib.parse
+import bcrypt
+from datetime import date, datetime, timedelta
 
-    df_f = df[
-        (df["DataLavaggio_DT"].between(date.today(), limite))
-        & (df["Stato"].astype(str).str.upper() != "ANNULLATO DA CLIENTE")
-    ].sort_values(by="DataLavaggio_DT", na_position="first")
-
-    if filtro_fornitore_f != "Tutti":
-        df_f = df_f[df_f["Fornitore"].astype(str).str.strip() == filtro_fornitore_f]
-
-    st.write(f"Lavaggi programmati entro il {limite.strftime('%d/%m/%Y')}: **{len(df_f)}**")
-
-    if not df_f.empty:
-        st.dataframe(
-            df_f[["DataLavaggio", "Orario", "Cliente", "Impianto", "Stato", "Fornitore"]],
-            use_container_width=True,
-        )
-
-        testo = "Buongiorno,\ndi seguito il riepilogo dei lavaggi dei prossimi 30 giorni:\n\n"
-        for _, r in df_f.iterrows():
-            testo += f"- {r['DataLavaggio']} {r['Orario']}: {r['Cliente']} | {r['Impianto']} | Stato: {r['Stato']}\n"
-
-        if st.button("Genera Email Fornitore", disabled=not can_send_comms):
-            st.code(testo)
-            mail_fornitore = st.session_state.modelli["mail_fornitore"]
-            if not email_valida(mail_fornitore):
-                st.error("Email fornitore mancante o non valida.")
-            else:
-                registra_log("Riepilogo fornitore", filtro_fornitore_f, f"Riepilogo {len(df_f)} lavaggi")
-                url = (
-                    f"mailto:{mail_fornitore}"
-                    f"?subject=Riepilogo Lavaggi 30gg"
-                    f"&body={urllib.parse.quote(testo)}"
-                )
-                st.markdown(f'<a href="{url}" target="_blank" class="action-link action-supplier">INVIA AL FORNITORE</a>', unsafe_allow_html=True)
+import gspread
+import pandas as pd
+import streamlit as st
+from google.oauth2.service_account import Credentials
 
 
 # ==========================================================
-# 11. CALENDARIO
+# 1. CONFIGURAZIONE BASE
 # ==========================================================
-elif pagina == "Calendario":
-    st.title("📅 Esporta Calendario")
+st.set_page_config(
+    page_title="FV Wash Manager",
+    layout="wide",
+    page_icon="🧼",
+    initial_sidebar_state="expanded",
+)
 
-    conf = df[
-        (df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE")
-        & (df["EventoCalendarioCreato"].astype(str).str.upper() != "SI")
-    ]
+SHEET_ID = st.secrets.get("google_sheet", {}).get(
+    "spreadsheet_id",
+    "16RUw8kcZRurs_LYP9WCGbbLiXZnHEhw_lLEsdlS5Zuc",
+)
 
-    if conf.empty:
-        st.info("Nessun nuovo evento confermato da esportare.")
-    else:
-        ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//FV Wash Manager//IT\n"
+FOGLIO_LAVAGGI = st.secrets.get("google_sheet", {}).get("worksheet_name", "Lavaggi")
+FOGLIO_UTENTI = st.secrets.get("google_sheet", {}).get("users_worksheet_name", "Utenti")
+FOGLIO_MODELLI = st.secrets.get("google_sheet", {}).get("models_worksheet_name", "Modelli")
+FOGLIO_LOG = st.secrets.get("google_sheet", {}).get("log_worksheet_name", "Log")
 
-        for _, r in conf.iterrows():
-            dt = r["DataLavaggio_DT"]
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 
-            if pd.notna(dt):
-                data_ics = str(dt).replace("-", "")
-                ics += (
-                    "BEGIN:VEVENT\n"
-                    f"SUMMARY:Lavaggio {r['Cliente']}\n"
-                    f"DTSTART:{data_ics}T080000\n"
-                    f"DTEND:{data_ics}T090000\n"
-                    "END:VEVENT\n"
-                )
-
-        ics += "END:VCALENDAR"
-
-        if st.download_button("Scarica .ics", ics, "lavaggi.ics", disabled=not can_send_comms):
-            for i in conf.index:
-                salva_sheet(
-                    i,
-                    {
-                        "EventoCalendarioCreato": "SI",
-                        "DataEventoCreato": datetime.now().strftime("%d/%m/%Y %H:%M"),
-                    },
-                )
-            registra_log("Esporta calendario", "", f"Eventi esportati: {len(conf)}")
-            st.success("Eventi segnati come esportati.")
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
 
 
 # ==========================================================
-# 12. GESTIONE UTENTI
+# 2. CSS
 # ==========================================================
-elif pagina == "Gestione Utenti":
-    st.title("👤 Gestione Utenti")
+st.markdown("""
+<style>
+    .stApp {
+        background: #f8fafc;
+    }
 
-    if not is_admin:
-        st.warning("Accesso riservato agli amministratori.")
-        st.stop()
+    .hero {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        color: white;
+        padding: 26px 30px;
+        border-radius: 18px;
+        margin-bottom: 22px;
+    }
 
-    utenti = carica_utenti()
+    .hero h1 {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 800;
+    }
 
-    if utenti.empty:
-        st.warning("Nessun utente trovato.")
-    else:
-        st.dataframe(
-            utenti[["username", "ruolo"]],
-            use_container_width=True,
-            hide_index=True,
-        )
+    .hero p {
+        margin: 8px 0 0 0;
+        color: #e2e8f0;
+        font-size: 15px;
+    }
 
-    st.divider()
-    st.markdown("### Nuovo utente / modifica utente")
+    [data-testid="stSidebar"] {
+        background: #0f172a;
+    }
 
-    lista_utenti = ["Nuovo utente"]
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] .stMarkdown {
+        color: #f8fafc !important;
+    }
 
-    if not utenti.empty:
-        lista_utenti += utenti["username"].tolist()
+    [data-testid="stSidebar"] input,
+    [data-testid="stSidebar"] .stTextInput input {
+        color: #0f172a !important;
+        background: #ffffff !important;
+    }
 
-    scelta = st.selectbox("Seleziona utente", lista_utenti)
-
-    if scelta == "Nuovo utente":
-        username = st.text_input("Username")
-        ruolo = st.selectbox("Ruolo", ["user", "supervisor", "admin"])
-        password = st.text_input("Password", type="password")
-        conferma = st.text_input("Conferma password", type="password")
-
-        if st.button("➕ CREA UTENTE", type="primary"):
-            if password != conferma:
-                st.error("Le password non coincidono.")
-            elif salva_utente(username, password, ruolo):
-                st.success("Utente creato.")
-                st.rerun()
-
-    else:
-        record = utenti[utenti["username"] == scelta].iloc[0]
-        username = st.text_input("Username", record["username"], disabled=True)
-        ruolo_corrente = record["ruolo"] if record["ruolo"] in ["user", "supervisor", "admin"] else "user"
-
-        ruolo = st.selectbox(
-            "Ruolo",
-            ["user", "supervisor", "admin"],
-            index=["user", "supervisor", "admin"].index(ruolo_corrente),
-        )
-
-        st.info("Lascia vuota la password se vuoi modificare solo il ruolo.")
-
-        nuova_password = st.text_input("Nuova password", type="password")
-        conferma_password = st.text_input("Conferma nuova password", type="password")
-
-        c1, c2 = st.columns(2)
-
-        with c1:
-            if st.button("💾 SALVA MODIFICHE", type="primary"):
-                if nuova_password and nuova_password != conferma_password:
-                    st.error("Le password non coincidono.")
-                elif salva_utente(username, nuova_password, ruolo):
-                    st.success("Utente aggiornato.")
-                    st.rerun()
-
-        with c2:
-            if st.button("🗑️ ELIMINA UTENTE"):
-                if elimina_utente(username):
-                    st.success("Utente eliminato.")
-                    st.rerun()
-
-
-# ==========================================================
-# 13. IMPOSTAZIONI
-# ==========================================================
-elif pagina == "Impostazioni":
-    st.title("⚙️ Diagnostica")
-
-    st.write(f"Utente: **{st.session_state.utente or 'ospite'}**")
-    st.write(f"Ruolo: **{st.session_state.ruolo}**")
-    st.write(f"Foglio lavaggi: **{FOGLIO_LAVAGGI}**")
-    st.write(f"Foglio utenti: **{FOGLIO_UTENTI}**")
-    st.write(f"Foglio modelli: **{FOGLIO_MODELLI}**")
-    st.write(f"Foglio log: **{FOGLIO_LOG}**")
-
-    st.dataframe(df, use_container_width=True)
+    [data-testid="stSidebar"] .stButton button,
+    [data-testid="stSidebar"] .stDownloadButton button,
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"],
+    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+        font-weight: 800 !important;
+        border-radius: 10px !important;
+    }
