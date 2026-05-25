@@ -866,29 +866,29 @@ if pagina == "Dashboard":
 
             curr_st = row["Stato"] if row["Stato"] in stati else "DA PROGRAMMARE"
 
-with c5:
-    n_st = st.selectbox(
-        "Stato",
-        stati,
-        index=stati.index(curr_st),
-        disabled=not can_edit_client,
-    )
+            with c5:
+                n_st = st.selectbox(
+                    "Stato",
+                    stati,
+                    index=stati.index(curr_st),
+                    disabled=not can_edit_client,
+                )
 
-    st.markdown(badge_stato(n_st), unsafe_allow_html=True)
+                st.markdown(badge_stato(n_st), unsafe_allow_html=True)
 
-    if st.button(
-        "💾 REGISTRA STATO",
-        key=f"save_stato_{st.session_state.selected_idx}",
-        disabled=not can_edit_client,
-        use_container_width=True,
-    ):
-        if salva_sheet(
-            st.session_state.selected_idx,
-            {"Stato": n_st},
-        ):
-            st.success("Stato aggiornato.")
-            st.session_state.df = carica_dati()
-            st.rerun()
+                if st.button(
+                    "💾 REGISTRA STATO",
+                    key=f"save_stato_{st.session_state.selected_idx}",
+                    disabled=not can_edit_client,
+                    use_container_width=True,
+                ):
+                    if salva_sheet(
+                        st.session_state.selected_idx,
+                        {"Stato": n_st},
+                    ):
+                        st.success("Stato aggiornato.")
+                        st.session_state.df = carica_dati()
+                        st.rerun()
 
             c6, c7 = st.columns(2)
             n_tel = c6.text_input("Telefono", row["Telefono"], disabled=not can_edit_client)
