@@ -554,6 +554,29 @@ def badge_stato(stato):
         "</div>"
     )
 
+def ordina_per_cliente(df_in):
+    return df_in.sort_values(
+        by="Cliente",
+        key=lambda s: s.astype(str).str.upper(),
+    )
+
+
+def ordina_per_data_lavaggio(df_in):
+    return df_in.sort_values(
+        by=["DataLavaggio_DT", "Cliente"],
+        ascending=[True, True],
+        na_position="first",
+        key=lambda s: s.astype(str).str.upper() if s.name == "Cliente" else s,
+    )
+
+
+def ordina_per_data_task(df_in):
+    return df_in.sort_values(
+        by=["Task_Due_DT", "Cliente"],
+        ascending=[True, True],
+        na_position="first",
+        key=lambda s: s.astype(str).str.upper() if s.name == "Cliente" else s,
+    )
 
 # ==========================================================
 # 6. SESSIONE
@@ -687,20 +710,30 @@ if pagina == "Dashboard":
 
         st.divider()
 
-    df_tutti = df.sort_values(by="Cliente")
-    df_conf = df[df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE"]
-    df_urg = df[
-        (df["GiorniMancanti"].between(0, 15))
-        & (df["Stato"].astype(str).str.upper() != "FATTO")
-        & (df["Stato"].astype(str).str.upper() != "CONFERMATO DA CLIENTE")
-    ]
-    df_comp = df[df["Stato"].astype(str).str.upper() == "FATTO"]
-    df_da_fare = df[
-        (df["Stato"].astype(str).str.upper() != "FATTO")
-        & (df["Stato"].astype(str).str.upper() != "ANNULLATO DA CLIENTE")
-    ]
-    df_annullati = df[df["Stato"].astype(str).str.upper() == "ANNULLATO DA CLIENTE"]
+df_tutti = ordina_per_cliente(df)
 
+df_conf = ordina_per_data_lavaggio(
+    df[df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE"]
+)
+
+df_urg = ordina_per_data_lavaggio(df[
+    (df["GiorniMancanti"].between(0, 15))
+    & (df["Stato"].astype(str).str.upper() != "FATTO")
+    & (df["Stato"].astype(str).str.upper() != "CONFERMATO DA CLIENTE")
+])
+
+df_comp = ordina_per_data_lavaggio(
+    df[df["Stato"].astype(str).str.upper() == "FATTO"]
+)
+
+df_da_fare = ordina_per_data_lavaggio(df[
+    (df["Stato"].astype(str).str.upper() != "FATTO")
+    & (df["Stato"].astype(str).str.upper() != "ANNULLATO DA CLIENTE")
+])
+
+df_annullati = ordina_per_data_lavaggio(
+    df[df["Stato"].astype(str).str.upper() == "ANNULLATO DA CLIENTE"]
+)
     k_cols = st.columns(6)
     kpis = [
         ("Tutti", "📋", len(df_tutti)),
@@ -724,12 +757,12 @@ if pagina == "Dashboard":
 
     st.divider()
 
-    if st.session_state.dash_filter == "Alert: Reminder 3gg":
-        df_view = urg_no_mail.sort_values(by="DataLavaggio_DT")
-    elif st.session_state.dash_filter == "Alert: Avvisi 30gg":
-        df_view = manca_30gg.sort_values(by="DataLavaggio_DT")
-    elif st.session_state.dash_filter == "Alert: Task Reminder":
-        df_view = task_scadenza.sort_values(by="Task_Due_DT")
+if st.session_state.dash_filter == "Alert: Reminder 3gg":
+    df_view = ordina_per_data_lavaggio(urg_no_mail)
+elif st.session_state.dash_filter == "Alert: Avvisi 30gg":
+    df_view = ordina_per_data_lavaggio(manca_30gg)
+elif st.session_state.dash_filter == "Alert: Task Reminder":
+    df_view = ordina_per_data_task(task_scadenza)
     elif st.session_state.dash_filter == "Tutti":
         df_view = df_tutti
     elif st.session_state.dash_filter == "Confermati":
