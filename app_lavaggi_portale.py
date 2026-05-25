@@ -947,7 +947,7 @@ if pagina == "Dashboard":
             st.markdown("#### 🚀 Invio Comunicazioni")
 
             tipo = "3" if row["GiorniMancanti"] <= 5 else "30"
-            data_txt = n_dt.strftime("%d/%m/%Y")
+            data_txt = "" if cancella_data_lavaggio or n_dt is None else n_dt.strftime("%d/%m/%Y")
             mod = st.session_state.modelli
 
             ca, cb, cc = st.columns(3)
