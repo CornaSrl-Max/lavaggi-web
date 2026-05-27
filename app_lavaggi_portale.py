@@ -3,6 +3,7 @@
 import re
 import urllib.parse
 import bcrypt
+import html
 from datetime import date, datetime, timedelta
 
 import gspread
@@ -257,6 +258,85 @@ st.markdown("""
     .action-mail { background: #2563eb; }
     .action-wa { background: #16a34a; }
     .action-supplier { background: #475569; }
+
+    .compact-alert-title {
+        font-size: 14px;
+        font-weight: 900;
+        color: #0f172a;
+        margin: 4px 0 8px 0;
+    }
+
+    .calendar-shell {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 16px;
+        margin: 10px 0 18px 0;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .calendar-title {
+        font-size: 17px;
+        font-weight: 900;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+
+    .calendar-day-title {
+        font-size: 13px;
+        font-weight: 900;
+        color: #334155;
+        margin-bottom: 8px;
+    }
+
+    .calendar-cell {
+        min-height: 132px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+
+    .calendar-cell-muted {
+        opacity: 0.48;
+    }
+
+    .calendar-date {
+        font-size: 12px;
+        font-weight: 900;
+        color: #475569;
+        margin-bottom: 6px;
+    }
+
+    .calendar-event {
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        border-left: 4px solid #16a34a;
+        color: #14532d;
+        border-radius: 10px;
+        padding: 7px 8px;
+        margin-bottom: 6px;
+        font-size: 12px;
+        line-height: 1.25;
+    }
+
+    .calendar-event-time {
+        font-weight: 900;
+        color: #166534;
+    }
+
+    .calendar-event-client {
+        font-weight: 900;
+        color: #14532d;
+    }
+
+    .calendar-empty {
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 8px 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -722,6 +802,153 @@ def dettaglio_modifiche(row, aggiornamenti):
     return " | ".join(parti) if parti else "Nessuna variazione"
 
 
+def inizio_settimana(giorno):
+    return giorno - timedelta(days=giorno.weekday())
+
+
+def lavaggi_confermati_per_calendario(df_in):
+    if df_in.empty:
+        return pd.DataFrame()
+
+    confermati = df_in[
+        (df_in["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE")
+        & (df_in["DataLavaggio_DT"].notna())
+    ].copy()
+
+    if confermati.empty:
+        return confermati
+
+    confermati["_OrarioOrd"] = confermati["Orario"].astype(str).str.strip()
+    return confermati.sort_values(
+        by=["DataLavaggio_DT", "_OrarioOrd", "Cliente"],
+        ascending=[True, True, True],
+        key=lambda s: s.astype(str).str.upper() if s.name == "Cliente" else s,
+    )
+
+
+def evento_calendario_html(r):
+    orario = html.escape(str(r.get("Orario", "")).strip() or "Orario n.d.")
+    cliente = html.escape(str(r.get("Cliente", "")).strip())
+    impianto = html.escape(str(r.get("Impianto", "")).strip())
+    fornitore = html.escape(str(r.get("Fornitore", "")).strip())
+
+    extra = impianto
+    if fornitore:
+        extra = f"{extra}<br>{fornitore}" if extra else fornitore
+
+    return (
+        '<div class="calendar-event">'
+        f'<div class="calendar-event-time">{orario}</div>'
+        f'<div class="calendar-event-client">{cliente}</div>'
+        f'<div>{extra}</div>'
+        "</div>"
+    )
+
+
+def render_giorno_calendario(df_cal, giorno):
+    eventi = df_cal[df_cal["DataLavaggio_DT"] == giorno]
+    st.markdown(f"#### {giorno.strftime('%d/%m/%Y')}")
+
+    if eventi.empty:
+        st.info("Nessun lavaggio confermato in questa giornata.")
+        return
+
+    for _, r in eventi.iterrows():
+        st.markdown(evento_calendario_html(r), unsafe_allow_html=True)
+
+
+def render_settimana_calendario(df_cal, giorno):
+    start = inizio_settimana(giorno)
+    giorni = [start + timedelta(days=i) for i in range(7)]
+    nomi = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
+    cols = st.columns(7)
+
+    for i, g in enumerate(giorni):
+        eventi = df_cal[df_cal["DataLavaggio_DT"] == g]
+        with cols[i]:
+            st.markdown(f'<div class="calendar-day-title">{nomi[i]} {g.strftime("%d/%m")}</div>', unsafe_allow_html=True)
+            st.markdown('<div class="calendar-cell">', unsafe_allow_html=True)
+            if eventi.empty:
+                st.markdown('<div class="calendar-empty">Nessun lavaggio</div>', unsafe_allow_html=True)
+            else:
+                for _, r in eventi.iterrows():
+                    st.markdown(evento_calendario_html(r), unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_mese_calendario(df_cal, giorno):
+    primo = giorno.replace(day=1)
+    if primo.month == 12:
+        prossimo_mese = primo.replace(year=primo.year + 1, month=1)
+    else:
+        prossimo_mese = primo.replace(month=primo.month + 1)
+
+    ultimo = prossimo_mese - timedelta(days=1)
+    start = inizio_settimana(primo)
+    end = inizio_settimana(ultimo) + timedelta(days=6)
+    giorni = []
+    corrente = start
+
+    while corrente <= end:
+        giorni.append(corrente)
+        corrente += timedelta(days=1)
+
+    st.markdown(f"#### {primo.strftime('%m/%Y')}")
+    nomi = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
+    header_cols = st.columns(7)
+    for i, nome in enumerate(nomi):
+        header_cols[i].markdown(f'<div class="calendar-day-title">{nome}</div>', unsafe_allow_html=True)
+
+    for settimana_start in range(0, len(giorni), 7):
+        cols = st.columns(7)
+        for i, g in enumerate(giorni[settimana_start:settimana_start + 7]):
+            eventi = df_cal[df_cal["DataLavaggio_DT"] == g]
+            muted = " calendar-cell-muted" if g.month != primo.month else ""
+            with cols[i]:
+                st.markdown(f'<div class="calendar-cell{muted}">', unsafe_allow_html=True)
+                st.markdown(f'<div class="calendar-date">{g.day}</div>', unsafe_allow_html=True)
+                if eventi.empty:
+                    st.markdown('<div class="calendar-empty">-</div>', unsafe_allow_html=True)
+                else:
+                    for _, r in eventi.head(3).iterrows():
+                        st.markdown(evento_calendario_html(r), unsafe_allow_html=True)
+                    if len(eventi) > 3:
+                        st.markdown(f'<div class="calendar-empty">+{len(eventi) - 3} altri</div>', unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_calendario_confermati(df_in):
+    df_cal = lavaggi_confermati_per_calendario(df_in)
+
+    st.markdown('<div class="calendar-shell">', unsafe_allow_html=True)
+    st.markdown('<div class="calendar-title">📅 Calendario Lavaggi Confermati</div>', unsafe_allow_html=True)
+
+    c1, c2 = st.columns([1, 1])
+    vista = c1.radio(
+        "Vista calendario",
+        ["Settimana", "Mese", "Giorno"],
+        horizontal=True,
+        key="calendar_view",
+    )
+    giorno = c2.date_input(
+        "Data riferimento",
+        value=date.today(),
+        format="DD/MM/YYYY",
+        key="calendar_ref_date",
+    )
+
+    if df_cal.empty:
+        st.info("Nessun lavaggio confermato con data disponibile.")
+    elif vista == "Giorno":
+        render_giorno_calendario(df_cal, giorno)
+    elif vista == "Mese":
+        render_mese_calendario(df_cal, giorno)
+    else:
+        render_settimana_calendario(df_cal, giorno)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 # ==========================================================
 # 6. SESSIONE
 # ==========================================================
@@ -830,41 +1057,40 @@ if pagina == "Dashboard":
         )
     ]
 
-    if not urg_no_mail.empty or not manca_30gg.empty or not task_scadenza.empty:
-        st.markdown("### ⚠️ Centro Avvisi")
-        a1, a2, a3 = st.columns(3)
+    st.markdown('<div class="compact-alert-title">⚠️ Centro Avvisi</div>', unsafe_allow_html=True)
+    a1, a2, a3 = st.columns(3)
 
-        with a1:
-            st.markdown('<div class="alert-card alert-red">', unsafe_allow_html=True)
-            if not urg_no_mail.empty:
-                if st.button(f"🚨 Reminder 3gg mancanti: {len(urg_no_mail)}"):
-                    st.session_state.dash_filter = "Alert: Reminder 3gg"
-                    st.rerun()
-            else:
-                st.write("🚨 Reminder 3gg mancanti: 0")
-            st.markdown("</div>", unsafe_allow_html=True)
+    with a1:
+        if st.button(
+            f"🚨 3gg: {len(urg_no_mail)}",
+            disabled=urg_no_mail.empty,
+            use_container_width=True,
+            key="alert_3gg_compact",
+        ):
+            st.session_state.dash_filter = "Alert: Reminder 3gg"
+            st.rerun()
 
-        with a2:
-            st.markdown('<div class="alert-card alert-yellow">', unsafe_allow_html=True)
-            if not manca_30gg.empty:
-                if st.button(f"📧 Avvisi 30gg mancanti: {len(manca_30gg)}"):
-                    st.session_state.dash_filter = "Alert: Avvisi 30gg"
-                    st.rerun()
-            else:
-                st.write("📧 Avvisi 30gg mancanti: 0")
-            st.markdown("</div>", unsafe_allow_html=True)
+    with a2:
+        if st.button(
+            f"📧 30gg: {len(manca_30gg)}",
+            disabled=manca_30gg.empty,
+            use_container_width=True,
+            key="alert_30gg_compact",
+        ):
+            st.session_state.dash_filter = "Alert: Avvisi 30gg"
+            st.rerun()
 
-        with a3:
-            st.markdown('<div class="alert-card alert-blue">', unsafe_allow_html=True)
-            if not task_scadenza.empty:
-                if st.button(f"🔔 Task Reminder: {len(task_scadenza)}"):
-                    st.session_state.dash_filter = "Alert: Task Reminder"
-                    st.rerun()
-            else:
-                st.write("🔔 Task Reminder: 0")
-            st.markdown("</div>", unsafe_allow_html=True)
+    with a3:
+        if st.button(
+            f"🔔 Task: {len(task_scadenza)}",
+            disabled=task_scadenza.empty,
+            use_container_width=True,
+            key="alert_task_compact",
+        ):
+            st.session_state.dash_filter = "Alert: Task Reminder"
+            st.rerun()
 
-        st.divider()
+    render_calendario_confermati(df)
 
     df_tutti = ordina_per_cliente(df)
     df_conf = ordina_per_data_lavaggio(
