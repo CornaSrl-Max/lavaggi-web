@@ -1066,13 +1066,11 @@ def render_calendario_avanzato(df_in):
             st.rerun()
 
     with nav3:
-        mese_scelto = st.date_input(
-            "Mese visualizzato",
-            value=st.session_state.cal_mese_rif,
-            format="DD/MM/YYYY",
-            key="cal_mese_input",
+        mese_corrente = st.session_state.cal_mese_rif.strftime("%m/%Y")
+        st.markdown(
+            f"<div class='calendar-title' style='text-align:center; margin-top:8px;'>{mese_corrente}</div>",
+            unsafe_allow_html=True,
         )
-        st.session_state.cal_mese_rif = mese_scelto.replace(day=1)
 
     with nav4:
         if st.button("Mese succ. →", use_container_width=True):
