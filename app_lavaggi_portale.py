@@ -322,6 +322,12 @@ st.markdown("""
         line-height: 1.25;
     }
 
+    .calendar-event-link {
+        color: inherit !important;
+        text-decoration: none !important;
+        display: block;
+    }
+
     .calendar-event-confirmed {
         background: #dcfce7;
         border-color: #86efac;
@@ -912,6 +918,7 @@ def evento_calendario_html(r):
     fornitore = html.escape(str(r.get("Fornitore", "")).strip())
     classe_evento = classe_evento_calendario(r)
     stato_label = html.escape(etichetta_stato_calendario(r))
+    idx = urllib.parse.quote(str(r.name))
 
     extra = impianto
     if fornitore:
@@ -919,9 +926,11 @@ def evento_calendario_html(r):
 
     return (
         f'<div class="calendar-event {classe_evento}">'
+        f'<a class="calendar-event-link" href="?selected_idx={idx}" target="_self">'
         f'<div class="calendar-event-time">{orario} · {stato_label}</div>'
         f'<div class="calendar-event-client">{cliente}</div>'
         f'<div>{extra}</div>'
+        "</a>"
         "</div>"
     )
 
@@ -1114,6 +1123,13 @@ if "dash_filter" not in st.session_state:
 if "modelli" not in st.session_state:
     st.session_state.modelli = carica_modelli_sheet()
 
+try:
+    selected_from_url = st.query_params.get("selected_idx")
+    if selected_from_url is not None:
+        st.session_state.selected_idx = int(selected_from_url)
+except Exception:
+    pass
+
 
 is_admin = st.session_state.ruolo == "admin"
 can_edit_client = st.session_state.ruolo in ["admin", "supervisor"]
@@ -1198,41 +1214,6 @@ if pagina == "Dashboard":
         )
     ]
 
-    st.markdown('<div class="compact-alert-title">⚠️ Centro Avvisi</div>', unsafe_allow_html=True)
-    a1, a2, a3 = st.columns(3)
-
-    with a1:
-        if st.button(
-            f"🚨 3gg: {len(urg_no_mail)}",
-            disabled=urg_no_mail.empty,
-            use_container_width=True,
-            key="alert_3gg_compact",
-        ):
-            st.session_state.dash_filter = "Alert: Reminder 3gg"
-            st.rerun()
-
-    with a2:
-        if st.button(
-            f"📧 30gg: {len(manca_30gg)}",
-            disabled=manca_30gg.empty,
-            use_container_width=True,
-            key="alert_30gg_compact",
-        ):
-            st.session_state.dash_filter = "Alert: Avvisi 30gg"
-            st.rerun()
-
-    with a3:
-        if st.button(
-            f"🔔 Task: {len(task_scadenza)}",
-            disabled=task_scadenza.empty,
-            use_container_width=True,
-            key="alert_task_compact",
-        ):
-            st.session_state.dash_filter = "Alert: Task Reminder"
-            st.rerun()
-
-    render_calendario_confermati(df)
-
     df_tutti = ordina_per_cliente(df)
     df_conf = ordina_per_data_lavaggio(
         df[df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE"]
@@ -1275,6 +1256,41 @@ if pagina == "Dashboard":
                 st.rerun()
 
             st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown('<div class="compact-alert-title">⚠️ Centro Avvisi</div>', unsafe_allow_html=True)
+    a1, a2, a3 = st.columns(3)
+
+    with a1:
+        if st.button(
+            f"🚨 3gg: {len(urg_no_mail)}",
+            disabled=urg_no_mail.empty,
+            use_container_width=True,
+            key="alert_3gg_compact",
+        ):
+            st.session_state.dash_filter = "Alert: Reminder 3gg"
+            st.rerun()
+
+    with a2:
+        if st.button(
+            f"📧 30gg: {len(manca_30gg)}",
+            disabled=manca_30gg.empty,
+            use_container_width=True,
+            key="alert_30gg_compact",
+        ):
+            st.session_state.dash_filter = "Alert: Avvisi 30gg"
+            st.rerun()
+
+    with a3:
+        if st.button(
+            f"🔔 Task: {len(task_scadenza)}",
+            disabled=task_scadenza.empty,
+            use_container_width=True,
+            key="alert_task_compact",
+        ):
+            st.session_state.dash_filter = "Alert: Task Reminder"
+            st.rerun()
+
+    render_calendario_confermati(df)
 
     st.markdown(
         """
