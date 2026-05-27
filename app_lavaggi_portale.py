@@ -303,11 +303,21 @@ st.markdown("""
         opacity: 0.48;
     }
 
+    .calendar-cell-today {
+        border: 2px solid #ef4444;
+        background: #fff7ed;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.08);
+    }
+
     .calendar-date {
         font-size: 12px;
         font-weight: 900;
         color: #475569;
         margin-bottom: 6px;
+    }
+
+    .calendar-date-today {
+        color: #b91c1c;
     }
 
     .calendar-event {
@@ -937,10 +947,15 @@ def evento_calendario_html(r):
 
 def cella_calendario_html(giorno, eventi, titolo=None, muted=False, max_eventi=None):
     classe_muted = " calendar-cell-muted" if muted else ""
+    classe_oggi = " calendar-cell-today" if giorno == date.today() else ""
+    classe_data_oggi = " calendar-date-today" if giorno == date.today() else ""
     if titolo == "":
         titolo_html = ""
     else:
-        titolo_html = f'<div class="calendar-date">{html.escape(titolo or str(giorno.day))}</div>'
+        titolo_testo = html.escape(titolo or str(giorno.day))
+        if giorno == date.today():
+            titolo_testo = f"Oggi · {titolo_testo}"
+        titolo_html = f'<div class="calendar-date {classe_data_oggi}">{titolo_testo}</div>'
 
     contenuto = ""
     eventi_da_mostrare = eventi if max_eventi is None else eventi.head(max_eventi)
@@ -952,7 +967,7 @@ def cella_calendario_html(giorno, eventi, titolo=None, muted=False, max_eventi=N
     elif max_eventi is not None and len(eventi) > max_eventi:
         contenuto += f'<div class="calendar-empty">+{len(eventi) - max_eventi} altri</div>'
 
-    return f'<div class="calendar-cell{classe_muted}">{titolo_html}{contenuto}</div>'
+    return f'<div class="calendar-cell{classe_muted}{classe_oggi}">{titolo_html}{contenuto}</div>'
 
 
 def render_giorno_calendario(df_cal, giorno):
@@ -1021,13 +1036,22 @@ def render_calendario_confermati(df_in):
     st.markdown('<div class="calendar-shell">', unsafe_allow_html=True)
     st.markdown('<div class="calendar-title">📅 Calendario Lavaggi</div>', unsafe_allow_html=True)
 
-    vista = st.radio(
-        "Vista calendario",
-        ["Settimana", "Mese", "Giorno"],
-        horizontal=True,
-        key="calendar_view",
-    )
-    giorno = date.today()
+    c1, c2 = st.columns([4, 1])
+    with c1:
+        vista = st.radio(
+            "Vista calendario",
+            ["Settimana", "Mese", "Giorno"],
+            horizontal=True,
+            key="calendar_view",
+        )
+    with c2:
+        if st.button("Oggi", use_container_width=True, key="calendar_today_dashboard"):
+            st.session_state.calendar_ref_date = date.today()
+            st.rerun()
+
+    if "calendar_ref_date" not in st.session_state:
+        st.session_state.calendar_ref_date = date.today()
+    giorno = st.session_state.calendar_ref_date
 
     if df_cal.empty:
         st.info("Nessun lavaggio con data disponibile.")
