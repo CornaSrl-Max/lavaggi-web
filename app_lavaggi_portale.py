@@ -1187,7 +1187,7 @@ with st.sidebar:
         pagine += ["Gestione Utenti"]
 
     pagine += ["Impostazioni"]
-    pagina = st.radio("Navigazione", pagine)
+    pagina = st.radio("Schede", pagine)
 
     st.divider()
 
@@ -1210,7 +1210,7 @@ df = st.session_state.df
 
 if pagina == "Dashboard":
     st.markdown(
-        '<div class="hero"><h1>FV WASH MANAGER</h1><p>Controllo Operativo Interventi</p></div>',
+        '<div class="hero"><h1>FV WASH MANAGER</h1><p>Gestione operativa lavaggi impianti FV</p></div>',
         unsafe_allow_html=True,
     )
 
@@ -1752,7 +1752,7 @@ elif pagina == "Fornitori":
 # 11. CALENDARIO
 # ==========================================================
 elif pagina == "Calendario":
-    st.title("📅 Esporta Calendario")
+    st.title("📅 Calendario Lavaggi")
 
     render_calendario_avanzato(df)
 
