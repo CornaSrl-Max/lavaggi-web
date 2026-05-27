@@ -19,7 +19,7 @@ st.set_page_config(
     page_title="FV Wash Manager",
     layout="wide",
     page_icon="🧼",
-    initial_sidebar_state="auto",
+    initial_sidebar_state="collapsed",
 )
 
 SHEET_ID = st.secrets.get("google_sheet", {}).get(
