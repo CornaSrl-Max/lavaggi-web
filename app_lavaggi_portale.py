@@ -290,12 +290,13 @@ st.markdown("""
     }
 
     .calendar-cell {
-        min-height: 132px;
+        min-height: 82px;
         background: #f8fafc;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
         padding: 8px;
         margin-bottom: 8px;
+        overflow: hidden;
     }
 
     .calendar-cell-muted {
@@ -315,9 +316,9 @@ st.markdown("""
         border-left: 4px solid #16a34a;
         color: #14532d;
         border-radius: 10px;
-        padding: 7px 8px;
-        margin-bottom: 6px;
-        font-size: 12px;
+        padding: 6px 7px;
+        margin-bottom: 5px;
+        font-size: 11px;
         line-height: 1.25;
     }
 
@@ -333,9 +334,9 @@ st.markdown("""
 
     .calendar-empty {
         color: #94a3b8;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 700;
-        padding: 8px 0;
+        padding: 4px 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -845,6 +846,26 @@ def evento_calendario_html(r):
     )
 
 
+def cella_calendario_html(giorno, eventi, titolo=None, muted=False, max_eventi=None):
+    classe_muted = " calendar-cell-muted" if muted else ""
+    if titolo == "":
+        titolo_html = ""
+    else:
+        titolo_html = f'<div class="calendar-date">{html.escape(titolo or str(giorno.day))}</div>'
+
+    contenuto = ""
+    eventi_da_mostrare = eventi if max_eventi is None else eventi.head(max_eventi)
+    for _, r in eventi_da_mostrare.iterrows():
+        contenuto += evento_calendario_html(r)
+
+    if eventi.empty:
+        contenuto = '<div class="calendar-empty">Nessun lavaggio</div>'
+    elif max_eventi is not None and len(eventi) > max_eventi:
+        contenuto += f'<div class="calendar-empty">+{len(eventi) - max_eventi} altri</div>'
+
+    return f'<div class="calendar-cell{classe_muted}">{titolo_html}{contenuto}</div>'
+
+
 def render_giorno_calendario(df_cal, giorno):
     eventi = df_cal[df_cal["DataLavaggio_DT"] == giorno]
     st.markdown(f"#### {giorno.strftime('%d/%m/%Y')}")
@@ -867,13 +888,7 @@ def render_settimana_calendario(df_cal, giorno):
         eventi = df_cal[df_cal["DataLavaggio_DT"] == g]
         with cols[i]:
             st.markdown(f'<div class="calendar-day-title">{nomi[i]} {g.strftime("%d/%m")}</div>', unsafe_allow_html=True)
-            st.markdown('<div class="calendar-cell">', unsafe_allow_html=True)
-            if eventi.empty:
-                st.markdown('<div class="calendar-empty">Nessun lavaggio</div>', unsafe_allow_html=True)
-            else:
-                for _, r in eventi.iterrows():
-                    st.markdown(evento_calendario_html(r), unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown(cella_calendario_html(g, eventi, titolo="", max_eventi=4), unsafe_allow_html=True)
 
 
 def render_mese_calendario(df_cal, giorno):
@@ -905,16 +920,10 @@ def render_mese_calendario(df_cal, giorno):
             eventi = df_cal[df_cal["DataLavaggio_DT"] == g]
             muted = " calendar-cell-muted" if g.month != primo.month else ""
             with cols[i]:
-                st.markdown(f'<div class="calendar-cell{muted}">', unsafe_allow_html=True)
-                st.markdown(f'<div class="calendar-date">{g.day}</div>', unsafe_allow_html=True)
-                if eventi.empty:
-                    st.markdown('<div class="calendar-empty">-</div>', unsafe_allow_html=True)
-                else:
-                    for _, r in eventi.head(3).iterrows():
-                        st.markdown(evento_calendario_html(r), unsafe_allow_html=True)
-                    if len(eventi) > 3:
-                        st.markdown(f'<div class="calendar-empty">+{len(eventi) - 3} altri</div>', unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown(
+                    cella_calendario_html(g, eventi, titolo=str(g.day), muted=bool(muted), max_eventi=3),
+                    unsafe_allow_html=True,
+                )
 
 
 def render_calendario_confermati(df_in):
