@@ -322,14 +322,40 @@ st.markdown("""
         line-height: 1.25;
     }
 
+    .calendar-event-confirmed {
+        background: #dcfce7;
+        border-color: #86efac;
+        border-left-color: #16a34a;
+        color: #14532d;
+    }
+
+    .calendar-event-done {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        border-left-color: #2563eb;
+        color: #1e3a8a;
+    }
+
+    .calendar-event-planned {
+        background: #fef3c7;
+        border-color: #fcd34d;
+        border-left-color: #f59e0b;
+        color: #78350f;
+    }
+
+    .calendar-event-urgent {
+        background: #ffedd5;
+        border-color: #fdba74;
+        border-left-color: #f97316;
+        color: #7c2d12;
+    }
+
     .calendar-event-time {
         font-weight: 900;
-        color: #166534;
     }
 
     .calendar-event-client {
         font-weight: 900;
-        color: #14532d;
     }
 
     .calendar-empty {
@@ -807,6 +833,58 @@ def inizio_settimana(giorno):
     return giorno - timedelta(days=giorno.weekday())
 
 
+def classe_evento_calendario(r):
+    stato = str(r.get("Stato", "")).upper()
+    giorni = r.get("GiorniMancanti", 999)
+
+    if "FATTO" in stato:
+        return "calendar-event-done"
+    if "CONFERMATO" in stato:
+        return "calendar-event-confirmed"
+    if pd.notna(giorni) and giorni <= 5:
+        return "calendar-event-urgent"
+    return "calendar-event-planned"
+
+
+def etichetta_stato_calendario(r):
+    stato = str(r.get("Stato", "")).upper()
+    giorni = r.get("GiorniMancanti", 999)
+
+    if "FATTO" in stato:
+        return "Fatto"
+    if "CONFERMATO" in stato:
+        return "Confermato"
+    if pd.notna(giorni) and giorni <= 5:
+        return "Urgente"
+    return "In programma"
+
+
+def lavaggi_per_calendario(df_in, includi_fatti=True):
+    if df_in.empty:
+        return pd.DataFrame()
+
+    stato = df_in["Stato"].astype(str).str.upper()
+    mask = (
+        (stato != "ANNULLATO DA CLIENTE")
+        & (df_in["DataLavaggio_DT"].notna())
+    )
+
+    if not includi_fatti:
+        mask = mask & (stato != "FATTO")
+
+    lavaggi = df_in[mask].copy()
+
+    if lavaggi.empty:
+        return lavaggi
+
+    lavaggi["_OrarioOrd"] = lavaggi["Orario"].astype(str).str.strip()
+    return lavaggi.sort_values(
+        by=["DataLavaggio_DT", "_OrarioOrd", "Cliente"],
+        ascending=[True, True, True],
+        key=lambda s: s.astype(str).str.upper() if s.name == "Cliente" else s,
+    )
+
+
 def lavaggi_confermati_per_calendario(df_in):
     if df_in.empty:
         return pd.DataFrame()
@@ -832,14 +910,16 @@ def evento_calendario_html(r):
     cliente = html.escape(str(r.get("Cliente", "")).strip())
     impianto = html.escape(str(r.get("Impianto", "")).strip())
     fornitore = html.escape(str(r.get("Fornitore", "")).strip())
+    classe_evento = classe_evento_calendario(r)
+    stato_label = html.escape(etichetta_stato_calendario(r))
 
     extra = impianto
     if fornitore:
         extra = f"{extra}<br>{fornitore}" if extra else fornitore
 
     return (
-        '<div class="calendar-event">'
-        f'<div class="calendar-event-time">{orario}</div>'
+        f'<div class="calendar-event {classe_evento}">'
+        f'<div class="calendar-event-time">{orario} · {stato_label}</div>'
         f'<div class="calendar-event-client">{cliente}</div>'
         f'<div>{extra}</div>'
         "</div>"
@@ -927,10 +1007,10 @@ def render_mese_calendario(df_cal, giorno):
 
 
 def render_calendario_confermati(df_in):
-    df_cal = lavaggi_confermati_per_calendario(df_in)
+    df_cal = lavaggi_per_calendario(df_in, includi_fatti=True)
 
     st.markdown('<div class="calendar-shell">', unsafe_allow_html=True)
-    st.markdown('<div class="calendar-title">📅 Calendario Lavaggi Confermati</div>', unsafe_allow_html=True)
+    st.markdown('<div class="calendar-title">📅 Calendario Lavaggi</div>', unsafe_allow_html=True)
 
     c1, c2 = st.columns([1, 1])
     vista = c1.radio(
@@ -947,13 +1027,73 @@ def render_calendario_confermati(df_in):
     )
 
     if df_cal.empty:
-        st.info("Nessun lavaggio confermato con data disponibile.")
+        st.info("Nessun lavaggio con data disponibile.")
     elif vista == "Giorno":
         render_giorno_calendario(df_cal, giorno)
     elif vista == "Mese":
         render_mese_calendario(df_cal, giorno)
     else:
         render_settimana_calendario(df_cal, giorno)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_calendario_avanzato(df_in):
+    st.markdown('<div class="calendar-shell">', unsafe_allow_html=True)
+    st.markdown('<div class="calendar-title">📅 Calendario Operativo Lavaggi</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="legend-row">
+            <span class="legend-item">🟩 Confermati</span>
+            <span class="legend-item">🟦 Fatti</span>
+            <span class="legend-item">🟨 In programma</span>
+            <span class="legend-item">🟧 Meno di 5 giorni non confermati</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if "cal_mese_rif" not in st.session_state:
+        st.session_state.cal_mese_rif = date.today().replace(day=1)
+
+    nav1, nav2, nav3, nav4 = st.columns([1, 1, 2, 1])
+    with nav1:
+        if st.button("← Mese prec.", use_container_width=True):
+            rif = st.session_state.cal_mese_rif
+            if rif.month == 1:
+                st.session_state.cal_mese_rif = rif.replace(year=rif.year - 1, month=12)
+            else:
+                st.session_state.cal_mese_rif = rif.replace(month=rif.month - 1)
+            st.rerun()
+
+    with nav2:
+        if st.button("Oggi", use_container_width=True):
+            st.session_state.cal_mese_rif = date.today().replace(day=1)
+            st.rerun()
+
+    with nav3:
+        mese_scelto = st.date_input(
+            "Mese visualizzato",
+            value=st.session_state.cal_mese_rif,
+            format="DD/MM/YYYY",
+            key="cal_mese_input",
+        )
+        st.session_state.cal_mese_rif = mese_scelto.replace(day=1)
+
+    with nav4:
+        if st.button("Mese succ. →", use_container_width=True):
+            rif = st.session_state.cal_mese_rif
+            if rif.month == 12:
+                st.session_state.cal_mese_rif = rif.replace(year=rif.year + 1, month=1)
+            else:
+                st.session_state.cal_mese_rif = rif.replace(month=rif.month + 1)
+            st.rerun()
+
+    df_cal = lavaggi_per_calendario(df_in, includi_fatti=True)
+    if df_cal.empty:
+        st.info("Nessun lavaggio con data disponibile.")
+    else:
+        render_mese_calendario(df_cal, st.session_state.cal_mese_rif)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1038,7 +1178,7 @@ df = st.session_state.df
 
 if pagina == "Dashboard":
     st.markdown(
-        '<div class="hero"><h1>FV WASH MANAGER</h1><p>Gestione lavaggi impianti FV</p></div>',
+        '<div class="hero"><h1>FV WASH MANAGER</h1><p>Controllo Operativo Interventi</p></div>',
         unsafe_allow_html=True,
     )
 
@@ -1581,6 +1721,11 @@ elif pagina == "Fornitori":
 # ==========================================================
 elif pagina == "Calendario":
     st.title("📅 Esporta Calendario")
+
+    render_calendario_avanzato(df)
+
+    st.divider()
+    st.markdown("### Esporta eventi confermati")
 
     conf = df[
         (df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE")
