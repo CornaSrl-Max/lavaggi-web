@@ -19,7 +19,7 @@ st.set_page_config(
     page_title="FV Wash Manager",
     layout="wide",
     page_icon="🧼",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 SHEET_ID = st.secrets.get("google_sheet", {}).get(
@@ -1012,19 +1012,13 @@ def render_calendario_confermati(df_in):
     st.markdown('<div class="calendar-shell">', unsafe_allow_html=True)
     st.markdown('<div class="calendar-title">📅 Calendario Lavaggi</div>', unsafe_allow_html=True)
 
-    c1, c2 = st.columns([1, 1])
-    vista = c1.radio(
+    vista = st.radio(
         "Vista calendario",
         ["Settimana", "Mese", "Giorno"],
         horizontal=True,
         key="calendar_view",
     )
-    giorno = c2.date_input(
-        "Data riferimento",
-        value=date.today(),
-        format="DD/MM/YYYY",
-        key="calendar_ref_date",
-    )
+    giorno = date.today()
 
     if df_cal.empty:
         st.info("Nessun lavaggio con data disponibile.")
