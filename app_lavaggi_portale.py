@@ -1038,7 +1038,7 @@ df = st.session_state.df
 
 if pagina == "Dashboard":
     st.markdown(
-        '<div class="hero"><h1>FV WASH MANAGER</h1><p>Controllo Operativo Interventi</p></div>',
+        '<div class="hero"><h1>FV WASH MANAGER</h1><p>Gestione lavaggi impianti FV</p></div>',
         unsafe_allow_html=True,
     )
 
