@@ -1513,6 +1513,28 @@ if pagina == "Dashboard":
                 disabled=not can_edit_client,
             )
 
+            nuova_data_lavaggio_txt = "" if cancella_data_lavaggio or n_dt is None else n_dt.strftime("%d/%m/%Y")
+            data_lavaggio_attuale_txt = str(row.get("DataLavaggio", "")).strip()
+            data_lavaggio_modificata = nuova_data_lavaggio_txt != data_lavaggio_attuale_txt
+
+            motivo_cambio_data = ""
+            dettaglio_cambio_data = ""
+            if data_lavaggio_modificata:
+                st.warning("La data lavaggio è stata modificata: indica il motivo prima di salvare.")
+                m1, m2 = st.columns([1, 2])
+                motivo_cambio_data = m1.selectbox(
+                    "Motivo cambio data",
+                    ["", "Richiesta cliente", "Richiesta fornitore", "Meteo", "Problema tecnico", "Altro"],
+                    key=f"motivo_cambio_data_{st.session_state.selected_idx}",
+                    disabled=not can_edit_client,
+                )
+                dettaglio_cambio_data = m2.text_input(
+                    "Dettaglio motivo",
+                    key=f"dettaglio_cambio_data_{st.session_state.selected_idx}",
+                    disabled=not can_edit_client,
+                    placeholder="Es. cliente non disponibile, fornitore rinvia, pioggia...",
+                )
+
             stati = [
                 "DA PROGRAMMARE",
                 "AVVISATO CLIENTE",
@@ -1596,24 +1618,35 @@ if pagina == "Dashboard":
             n_task_due = c9.date_input("Scadenza", task_date, format="DD/MM/YYYY", disabled=not can_edit_client)
 
             if st.button("💾 AGGIORNA DATI CLIENTE", type="primary", disabled=not can_edit_client):
-                aggiornamenti = {
-                    "Cliente": n_cl,
-                    "Impianto": n_im,
-                    "DataLavaggio": "" if cancella_data_lavaggio or n_dt is None else n_dt.strftime("%d/%m/%Y"),
-                    "Orario": "" if cancella_data_lavaggio else n_or,
-                    "Stato": n_st,
-                    "Telefono": n_tel,
-                    "EmailCliente": n_ml,
-                    "Note": n_note,
-                    "Task_Rem": n_task,
-                    "Task_Due": n_task_due.strftime("%d/%m/%Y") if n_task_due else "",
-                }
-                ok = salva_sheet(st.session_state.selected_idx, aggiornamenti)
-                if ok:
-                    registra_log("Aggiorna cliente", row["Cliente"], dettaglio_modifiche(row, aggiornamenti))
-                    st.success("Dati aggiornati.")
-                    st.session_state.df = carica_dati()
-                    st.rerun()
+                if data_lavaggio_modificata and not motivo_cambio_data:
+                    st.error("Per modificare o cancellare la data lavaggio devi indicare il motivo.")
+                else:
+                    aggiornamenti = {
+                        "Cliente": n_cl,
+                        "Impianto": n_im,
+                        "DataLavaggio": nuova_data_lavaggio_txt,
+                        "Orario": "" if cancella_data_lavaggio else n_or,
+                        "Stato": n_st,
+                        "Telefono": n_tel,
+                        "EmailCliente": n_ml,
+                        "Note": n_note,
+                        "Task_Rem": n_task,
+                        "Task_Due": n_task_due.strftime("%d/%m/%Y") if n_task_due else "",
+                    }
+                    ok = salva_sheet(st.session_state.selected_idx, aggiornamenti)
+                    if ok:
+                        registra_log("Aggiorna cliente", row["Cliente"], dettaglio_modifiche(row, aggiornamenti))
+                        if data_lavaggio_modificata:
+                            dettaglio_log_data = (
+                                f"DataLavaggio: '{data_lavaggio_attuale_txt}' -> '{nuova_data_lavaggio_txt}' "
+                                f"| Motivo: {motivo_cambio_data}"
+                            )
+                            if dettaglio_cambio_data:
+                                dettaglio_log_data += f" | Dettaglio: {dettaglio_cambio_data}"
+                            registra_log("Cambio data lavaggio", row["Cliente"], dettaglio_log_data)
+                        st.success("Dati aggiornati.")
+                        st.session_state.df = carica_dati()
+                        st.rerun()
 
             st.markdown('<div class="section-title">🚀 Invio Comunicazioni</div>', unsafe_allow_html=True)
 
