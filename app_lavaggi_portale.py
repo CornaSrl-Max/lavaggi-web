@@ -491,6 +491,34 @@ def salva_sheet(idx, mappa):
         return False
 
 
+@st.cache_data(ttl=120, show_spinner=False)
+def carica_log_sheet():
+    try:
+        ws = get_or_create_ws(
+            FOGLIO_LOG,
+            ["DataOra", "Utente", "Azione", "Cliente", "Dettaglio"],
+            rows=2000,
+            cols=5,
+        )
+        rows = ws.get_all_records()
+        df_log = pd.DataFrame(rows)
+
+        colonne = ["DataOra", "Utente", "Azione", "Cliente", "Dettaglio"]
+        for col in colonne:
+            if col not in df_log.columns:
+                df_log[col] = ""
+
+        df_log["DataOra_DT"] = pd.to_datetime(
+            df_log["DataOra"],
+            errors="coerce",
+            dayfirst=True,
+        )
+        return df_log
+
+    except Exception:
+        return pd.DataFrame(columns=["DataOra", "Utente", "Azione", "Cliente", "Dettaglio", "DataOra_DT"])
+
+
 def registra_log(azione, cliente="", dettaglio=""):
     try:
         ws = get_or_create_ws(
@@ -509,6 +537,7 @@ def registra_log(azione, cliente="", dettaglio=""):
             ],
             value_input_option="USER_ENTERED",
         )
+        carica_log_sheet.clear()
     except Exception:
         pass
 
@@ -843,6 +872,18 @@ def dettaglio_modifiche(row, aggiornamenti):
         if vecchio != nuovo_str:
             parti.append(f"{campo}: '{vecchio}' -> '{nuovo_str}'")
     return " | ".join(parti) if parti else "Nessuna variazione"
+
+
+def log_per_cliente(cliente, limite=30):
+    df_log = carica_log_sheet()
+    if df_log.empty:
+        return df_log
+
+    mask = df_log["Cliente"].astype(str).str.strip().str.upper() == str(cliente).strip().upper()
+    out = df_log[mask].copy()
+    if "DataOra_DT" in out.columns:
+        out = out.sort_values(by="DataOra_DT", ascending=False, na_position="last")
+    return out.head(limite)
 
 
 def inizio_settimana(giorno):
@@ -1184,10 +1225,10 @@ with st.sidebar:
     pagine = ["Dashboard", "Modelli Messaggi", "Fornitori", "Calendario"]
 
     if is_admin:
-        pagine += ["Gestione Utenti"]
+        pagine += ["Gestione Utenti", "Log"]
 
     pagine += ["Impostazioni"]
-    pagina = st.radio("Schede", pagine)
+    pagina = st.radio("Navigazione", pagine)
 
     st.divider()
 
@@ -1210,7 +1251,7 @@ df = st.session_state.df
 
 if pagina == "Dashboard":
     st.markdown(
-        '<div class="hero"><h1>FV WASH MANAGER</h1><p>Gestione operativa lavaggi impianti FV</p></div>',
+        '<div class="hero"><h1>FV WASH MANAGER</h1><p>Controllo Operativo Interventi</p></div>',
         unsafe_allow_html=True,
     )
 
@@ -1659,6 +1700,17 @@ if pagina == "Dashboard":
                     url = f"mailto:{mail_fornitore}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}"
                     st.markdown(f'<a href="{url}" target="_blank" class="action-link action-supplier">AVVISA FORNITORE</a>', unsafe_allow_html=True)
 
+            st.markdown('<div class="section-title">🧾 Log Cliente</div>', unsafe_allow_html=True)
+            df_log_cliente = log_per_cliente(row["Cliente"])
+            if df_log_cliente.empty:
+                st.info("Nessuna modifica registrata per questo cliente.")
+            else:
+                st.dataframe(
+                    df_log_cliente[["DataOra", "Utente", "Azione", "Dettaglio"]],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
             st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -1752,7 +1804,7 @@ elif pagina == "Fornitori":
 # 11. CALENDARIO
 # ==========================================================
 elif pagina == "Calendario":
-    st.title("📅 Calendario Lavaggi")
+    st.title("📅 Esporta Calendario")
 
     render_calendario_avanzato(df)
 
@@ -1875,7 +1927,61 @@ elif pagina == "Gestione Utenti":
 
 
 # ==========================================================
-# 13. IMPOSTAZIONI
+# 13. LOG
+# ==========================================================
+elif pagina == "Log":
+    st.title("🧾 Log Operativo")
+
+    if not is_admin:
+        st.warning("Accesso riservato agli amministratori.")
+        st.stop()
+
+    df_log = carica_log_sheet()
+
+    if df_log.empty:
+        st.info("Nessun log disponibile.")
+    else:
+        f1, f2, f3 = st.columns([1, 1, 1])
+
+        clienti_log = ["Tutti"] + sorted(
+            [c for c in df_log["Cliente"].astype(str).str.strip().unique().tolist() if c],
+            key=str.upper,
+        )
+        cliente_sel = f1.selectbox("Cliente", clienti_log)
+        azioni_log = ["Tutte"] + sorted(
+            [a for a in df_log["Azione"].astype(str).str.strip().unique().tolist() if a],
+            key=str.upper,
+        )
+        azione_sel = f2.selectbox("Azione", azioni_log)
+        ordina_per = f3.selectbox("Ordina per", ["Data più recente", "Data più vecchia", "Cliente A-Z", "Cliente Z-A"])
+
+        df_log_view = df_log.copy()
+
+        if cliente_sel != "Tutti":
+            df_log_view = df_log_view[df_log_view["Cliente"].astype(str).str.strip() == cliente_sel]
+
+        if azione_sel != "Tutte":
+            df_log_view = df_log_view[df_log_view["Azione"].astype(str).str.strip() == azione_sel]
+
+        if ordina_per == "Data più recente":
+            df_log_view = df_log_view.sort_values(by="DataOra_DT", ascending=False, na_position="last")
+        elif ordina_per == "Data più vecchia":
+            df_log_view = df_log_view.sort_values(by="DataOra_DT", ascending=True, na_position="last")
+        elif ordina_per == "Cliente A-Z":
+            df_log_view = df_log_view.sort_values(by="Cliente", key=lambda s: s.astype(str).str.upper())
+        else:
+            df_log_view = df_log_view.sort_values(by="Cliente", ascending=False, key=lambda s: s.astype(str).str.upper())
+
+        st.write(f"Record visualizzati: **{len(df_log_view)}**")
+        st.dataframe(
+            df_log_view[["DataOra", "Utente", "Azione", "Cliente", "Dettaglio"]],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+
+# ==========================================================
+# 14. IMPOSTAZIONI
 # ==========================================================
 elif pagina == "Impostazioni":
     st.title("⚙️ Diagnostica")
