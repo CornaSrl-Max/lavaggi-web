@@ -98,3 +98,1976 @@ st.markdown("""
         font-weight: 800 !important;
         border-radius: 10px !important;
     }
+
+    [data-testid="stSidebar"] .stButton button *,
+    [data-testid="stSidebar"] .stDownloadButton button *,
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] *,
+    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] * {
+        color: #0f172a !important;
+    }
+
+    [data-testid="stSidebar"] a,
+    [data-testid="stSidebar"] a * {
+        color: #0f172a !important;
+        font-weight: 800 !important;
+    }
+
+    .alert-card {
+        border-radius: 14px;
+        padding: 14px 14px 10px 14px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        min-height: 88px;
+    }
+
+    .alert-red {
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+
+    .alert-yellow {
+        background: #fffbeb;
+        border-color: #fde68a;
+    }
+
+    .alert-blue {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+
+    .kpi-btn button {
+        min-height: 78px;
+        border-radius: 14px !important;
+        border: 1px solid #dbe3ef !important;
+        background: #ffffff !important;
+        font-weight: 800 !important;
+        white-space: pre-line;
+        color: #0f172a !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .kpi-btn button * {
+        color: #0f172a !important;
+    }
+
+    .kpi-btn button:hover {
+        border-color: #2563eb !important;
+        background: #f8fbff !important;
+    }
+
+    .kpi-btn-active button {
+        border: 2px solid #2563eb !important;
+        background: #eff6ff !important;
+    }
+
+    .legend-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 4px 0 14px 0;
+    }
+
+    .legend-item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #334155;
+    }
+
+    .card {
+        background: white;
+        padding: 24px;
+        border-radius: 18px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08);
+    }
+
+    .section-title {
+        font-size: 15px;
+        font-weight: 900;
+        color: #0f172a;
+        margin: 18px 0 8px 0;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 14px;
+    }
+
+    .section-title-first {
+        border-top: 0;
+        padding-top: 0;
+        margin-top: 4px;
+    }
+
+    .status-badge {
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-weight: 900;
+        text-align: center;
+        font-size: 13px;
+        border: 1px solid transparent;
+        margin-bottom: 8px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .status-da-programmare {
+        background: #f1f5f9;
+        color: #475569;
+        border-color: #cbd5e1;
+    }
+
+    .status-avvisato {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: #f59e0b;
+    }
+
+    .status-confermato {
+        background: #dcfce7;
+        color: #166534;
+        border-color: #22c55e;
+    }
+
+    .status-fatto {
+        background: #dbeafe;
+        color: #1e40af;
+        border-color: #60a5fa;
+    }
+
+    .status-annullato {
+        background: #e5e7eb;
+        color: #374151;
+        border-color: #9ca3af;
+    }
+
+    .action-link {
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        color: white !important;
+        padding: 12px;
+        border-radius: 12px;
+        font-weight: 800;
+        margin-top: 8px;
+    }
+
+    .action-mail { background: #2563eb; }
+    .action-wa { background: #16a34a; }
+    .action-supplier { background: #475569; }
+
+    .compact-alert-title {
+        font-size: 14px;
+        font-weight: 900;
+        color: #0f172a;
+        margin: 4px 0 8px 0;
+    }
+
+    .calendar-shell {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 16px;
+        margin: 10px 0 18px 0;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .calendar-title {
+        font-size: 17px;
+        font-weight: 900;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+
+    .calendar-day-title {
+        font-size: 13px;
+        font-weight: 900;
+        color: #334155;
+        margin-bottom: 8px;
+    }
+
+    .calendar-cell {
+        min-height: 82px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 8px;
+        margin-bottom: 8px;
+        overflow: hidden;
+    }
+
+    .calendar-cell-muted {
+        opacity: 0.48;
+    }
+
+    .calendar-cell-today {
+        border: 2px solid #ef4444;
+        background: #fff7ed;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.08);
+    }
+
+    .calendar-date {
+        font-size: 12px;
+        font-weight: 900;
+        color: #475569;
+        margin-bottom: 6px;
+    }
+
+    .calendar-date-today {
+        color: #b91c1c;
+    }
+
+    .calendar-event {
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        border-left: 4px solid #16a34a;
+        color: #14532d;
+        border-radius: 10px;
+        padding: 6px 7px;
+        margin-bottom: 5px;
+        font-size: 11px;
+        line-height: 1.25;
+    }
+
+    .calendar-event-link {
+        color: inherit !important;
+        text-decoration: none !important;
+        display: block;
+    }
+
+    .calendar-event-confirmed {
+        background: #dcfce7;
+        border-color: #86efac;
+        border-left-color: #16a34a;
+        color: #14532d;
+    }
+
+    .calendar-event-done {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        border-left-color: #2563eb;
+        color: #1e3a8a;
+    }
+
+    .calendar-event-planned {
+        background: #fef3c7;
+        border-color: #fcd34d;
+        border-left-color: #f59e0b;
+        color: #78350f;
+    }
+
+    .calendar-event-urgent {
+        background: #ffedd5;
+        border-color: #fdba74;
+        border-left-color: #f97316;
+        color: #7c2d12;
+    }
+
+    .calendar-event-time {
+        font-weight: 900;
+    }
+
+    .calendar-event-client {
+        font-weight: 900;
+    }
+
+    .calendar-empty {
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 4px 0;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+# ==========================================================
+# 3. GOOGLE SHEETS
+# ==========================================================
+@st.cache_resource(show_spinner=False)
+def get_client():
+    creds = Credentials.from_service_account_info(
+        dict(st.secrets["gcp_service_account"]),
+        scopes=SCOPES,
+    )
+    return gspread.authorize(creds)
+
+
+@st.cache_resource(show_spinner=False)
+def get_spreadsheet():
+    return get_client().open_by_key(SHEET_ID)
+
+
+def get_ws_by_name(name):
+    return get_spreadsheet().worksheet(name)
+
+
+def get_or_create_ws(name, headers=None, rows=1000, cols=10):
+    try:
+        ws = get_spreadsheet().worksheet(name)
+    except gspread.WorksheetNotFound:
+        ws = get_spreadsheet().add_worksheet(title=name, rows=rows, cols=cols)
+        if headers:
+            ws.append_row(headers, value_input_option="USER_ENTERED")
+    return ws
+
+
+def normalizza_nome_colonna(nome):
+    return re.sub(r"\s+", "", str(nome)).strip()
+
+
+COLONNE_POTENZA_CANDIDATE = [
+    "kW",
+    "KW",
+    "PotenzakW",
+    "PotenzaKW",
+    "Potenza_kW",
+    "PotenzaImpianto_kWp",
+    "PotenzaImpiantokWp",
+    "PotenzaImpiantoKWp",
+    "PotenzaImpianto",
+    "Potenza_kWp",
+    "PotenzakWp",
+    "PotenzaKWp",
+    "Potenza",
+    "kWp",
+    "KWp",
+]
+
+
+def nome_colonna_potenza(df_in):
+    colonne_presenti = {
+        normalizza_nome_colonna(c).lower(): c
+        for c in df_in.columns
+    }
+
+    for candidato in COLONNE_POTENZA_CANDIDATE:
+        chiave = normalizza_nome_colonna(candidato).lower()
+        if chiave in colonne_presenti:
+            return colonne_presenti[chiave]
+
+    return "PotenzaImpianto_kWp"
+
+
+def carica_dati():
+    try:
+        ws = get_ws_by_name(FOGLIO_LAVAGGI)
+        df = pd.DataFrame(ws.get_all_records())
+
+        if df.empty:
+            return pd.DataFrame()
+
+        df.columns = [normalizza_nome_colonna(c) for c in df.columns]
+
+        colonne = [
+            "Cliente", "Impianto", "DataLavaggio", "Orario", "Telefono",
+            "EmailCliente", "Stato", "Fornitore", "Promemoria30gg",
+            "DataPromemoria", "Promemoria3gg", "DataPromemoria3gg",
+            "DataWA30gg", "DataWA3gg", "Note", "EventoCalendarioCreato",
+            "DataEventoCreato", "Task_Rem", "Task_Due",
+        ]
+
+        for col in colonne:
+            if col not in df.columns:
+                df[col] = ""
+
+        colonna_potenza = nome_colonna_potenza(df)
+        if colonna_potenza not in df.columns:
+            df[colonna_potenza] = ""
+
+        df["DataLavaggio_DT"] = pd.to_datetime(
+            df["DataLavaggio"], errors="coerce", dayfirst=True
+        ).dt.date
+
+        df["Task_Due_DT"] = pd.to_datetime(
+            df["Task_Due"], errors="coerce", dayfirst=True
+        ).dt.date
+
+        df["GiorniMancanti"] = df["DataLavaggio_DT"].apply(
+            lambda x: (x - date.today()).days if pd.notna(x) else 999
+        )
+
+        return df
+
+    except Exception as e:
+        st.error(f"Errore caricamento dati: {e}")
+        return pd.DataFrame()
+
+
+def salva_sheet(idx, mappa):
+    if not st.session_state.loggato:
+        return False
+
+    try:
+        ws = get_ws_by_name(FOGLIO_LAVAGGI)
+        headers = ws.row_values(1)
+
+        hdr_map = {
+            normalizza_nome_colonna(h).lower(): i + 1
+            for i, h in enumerate(headers)
+        }
+
+        updates = []
+
+        for k, v in mappa.items():
+            col = hdr_map.get(normalizza_nome_colonna(k).lower())
+            if col:
+                cella = gspread.utils.rowcol_to_a1(int(idx) + 2, col)
+                updates.append({"range": cella, "values": [[str(v)]]})
+
+        if updates:
+            ws.batch_update(updates, value_input_option="USER_ENTERED")
+
+        return True
+
+    except Exception as e:
+        st.error(f"Errore salvataggio: {e}")
+        return False
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def carica_log_sheet():
+    try:
+        ws = get_or_create_ws(
+            FOGLIO_LOG,
+            ["DataOra", "Utente", "Azione", "Cliente", "Dettaglio"],
+            rows=2000,
+            cols=5,
+        )
+        rows = ws.get_all_records()
+        df_log = pd.DataFrame(rows)
+
+        colonne = ["DataOra", "Utente", "Azione", "Cliente", "Dettaglio"]
+        for col in colonne:
+            if col not in df_log.columns:
+                df_log[col] = ""
+
+        df_log["DataOra_DT"] = pd.to_datetime(
+            df_log["DataOra"],
+            errors="coerce",
+            dayfirst=True,
+        )
+        return df_log
+
+    except Exception:
+        return pd.DataFrame(columns=["DataOra", "Utente", "Azione", "Cliente", "Dettaglio", "DataOra_DT"])
+
+
+def registra_log(azione, cliente="", dettaglio=""):
+    try:
+        ws = get_or_create_ws(
+            FOGLIO_LOG,
+            ["DataOra", "Utente", "Azione", "Cliente", "Dettaglio"],
+            rows=2000,
+            cols=5,
+        )
+        ws.append_row(
+            [
+                datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                st.session_state.utente or "ospite",
+                azione,
+                cliente,
+                dettaglio,
+            ],
+            value_input_option="USER_ENTERED",
+        )
+        carica_log_sheet.clear()
+    except Exception:
+        pass
+
+
+# ==========================================================
+# 4. AUTENTICAZIONE E UTENTI
+# ==========================================================
+@st.cache_data(ttl=300, show_spinner=False)
+def carica_utenti():
+    try:
+        ws = get_ws_by_name(FOGLIO_UTENTI)
+        utenti = pd.DataFrame(ws.get_all_records())
+
+        if utenti.empty:
+            return pd.DataFrame()
+
+        utenti.columns = [str(c).strip().lower() for c in utenti.columns]
+
+        required = {"username", "password_hash", "ruolo"}
+        if not required.issubset(set(utenti.columns)):
+            st.error("Il foglio Utenti deve avere le colonne: username, password_hash, ruolo")
+            return pd.DataFrame()
+
+        utenti["username"] = utenti["username"].astype(str).str.strip()
+        utenti["password_hash"] = utenti["password_hash"].astype(str).str.strip()
+        utenti["ruolo"] = utenti["ruolo"].astype(str).str.strip().str.lower()
+
+        return utenti
+
+    except Exception as e:
+        st.error(f"Errore caricamento utenti: {e}")
+        return pd.DataFrame()
+
+
+def genera_hash_password(password):
+    return bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt(),
+    ).decode("utf-8")
+
+
+def verifica_bcrypt(password, password_hash):
+    try:
+        if not password_hash.startswith("$2"):
+            return False
+
+        return bcrypt.checkpw(
+            password.encode("utf-8"),
+            password_hash.encode("utf-8"),
+        )
+
+    except Exception:
+        return False
+
+
+def login(username, password):
+    username = str(username).strip()
+    utenti = carica_utenti()
+
+    if utenti.empty:
+        st.error("Nessun utente disponibile.")
+        return
+
+    match = utenti[utenti["username"] == username]
+
+    if match.empty:
+        st.error("Credenziali errate")
+        return
+
+    record = match.iloc[0]
+
+    if verifica_bcrypt(password, record["password_hash"]):
+        st.session_state.loggato = True
+        st.session_state.utente = record["username"]
+        st.session_state.ruolo = record["ruolo"]
+        registra_log("Login", record["username"], f"Ruolo: {record['ruolo']}")
+        st.rerun()
+    else:
+        st.error("Credenziali errate")
+
+
+def logout():
+    registra_log("Logout", st.session_state.utente or "ospite", "")
+    st.session_state.loggato = False
+    st.session_state.utente = None
+    st.session_state.ruolo = "ospite"
+    st.rerun()
+
+
+def conta_admin(utenti):
+    if utenti.empty:
+        return 0
+    return len(utenti[utenti["ruolo"] == "admin"])
+
+
+def salva_utente(username, password, ruolo):
+    if not is_admin:
+        return False
+
+    username = str(username).strip()
+    ruolo = str(ruolo).strip().lower()
+
+    if not username:
+        st.error("Username obbligatorio.")
+        return False
+
+    if ruolo not in ["admin", "supervisor", "user"]:
+        st.error("Ruolo non valido.")
+        return False
+
+    try:
+        ws = get_ws_by_name(FOGLIO_UTENTI)
+        utenti = carica_utenti()
+        match = utenti[utenti["username"] == username]
+
+        if match.empty:
+            if not password:
+                st.error("Password obbligatoria per nuovo utente.")
+                return False
+
+            ws.append_row(
+                [username, genera_hash_password(password), ruolo],
+                value_input_option="USER_ENTERED",
+            )
+            registra_log("Crea utente", username, f"Ruolo: {ruolo}")
+
+        else:
+            record = match.iloc[0]
+            ruolo_attuale = record["ruolo"]
+
+            if ruolo_attuale == "admin" and ruolo != "admin" and conta_admin(utenti) <= 1:
+                st.error("Non puoi togliere il ruolo admin all'ultimo amministratore.")
+                return False
+
+            cell = ws.find(username, in_column=1)
+            row_num = cell.row
+            ws.update_cell(row_num, 3, ruolo)
+
+            dettaglio = f"Ruolo: {ruolo_attuale} -> {ruolo}"
+            if password:
+                ws.update_cell(row_num, 2, genera_hash_password(password))
+                dettaglio += " | Password aggiornata"
+
+            registra_log("Modifica utente", username, dettaglio)
+
+        carica_utenti.clear()
+        return True
+
+    except Exception as e:
+        st.error(f"Errore salvataggio utente: {e}")
+        return False
+
+
+def elimina_utente(username):
+    if not is_admin:
+        return False
+
+    if username == st.session_state.utente:
+        st.error("Non puoi eliminare l'utente con cui sei collegato.")
+        return False
+
+    try:
+        ws = get_ws_by_name(FOGLIO_UTENTI)
+        utenti = carica_utenti()
+        match = utenti[utenti["username"] == username]
+
+        if match.empty:
+            st.error("Utente non trovato.")
+            return False
+
+        record = match.iloc[0]
+        if record["ruolo"] == "admin" and conta_admin(utenti) <= 1:
+            st.error("Non puoi eliminare l'ultimo amministratore.")
+            return False
+
+        cell = ws.find(username, in_column=1)
+        if cell:
+            ws.delete_rows(cell.row)
+            carica_utenti.clear()
+            registra_log("Elimina utente", username, f"Ruolo eliminato: {record['ruolo']}")
+            return True
+
+        st.error("Utente non trovato.")
+        return False
+
+    except Exception as e:
+        st.error(f"Errore eliminazione utente: {e}")
+        return False
+
+
+# ==========================================================
+# 5. MODELLI MESSAGGI SU GOOGLE SHEET
+# ==========================================================
+MODELLI_DEFAULT = {
+    "mail_fornitore": "commerciale@bgservicebergamo.com",
+    "mail_30_ogg": "Lavaggio FV [CLIENTE]",
+    "mail_30_txt": "Buongiorno, ricordiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "wa_30_txt": "Buongiorno, ricordiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "mail_3_ogg": "Promemoria lavaggio FV [CLIENTE]",
+    "mail_3_txt": "Buongiorno, confermiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "wa_3_txt": "Buongiorno, confermiamo il lavaggio previsto il [DATA] alle [ORARIO].",
+    "mail_forn_ogg": "Intervento lavaggio FV [CLIENTE]",
+    "mail_forn_txt": "Buongiorno, intervento previsto il [DATA] alle [ORARIO] presso [CLIENTE] - [IMPIANTO].",
+}
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def carica_modelli_sheet():
+    try:
+        ws = get_ws_by_name(FOGLIO_MODELLI)
+        rows = ws.get_all_records()
+        modelli = MODELLI_DEFAULT.copy()
+
+        for row in rows:
+            chiave = str(row.get("chiave", "")).strip()
+            valore = str(row.get("valore", ""))
+            if chiave:
+                modelli[chiave] = valore
+
+        return modelli
+
+    except Exception as e:
+        st.warning(f"Foglio Modelli non disponibile, uso valori predefiniti: {e}")
+        return MODELLI_DEFAULT.copy()
+
+
+def salva_modelli_sheet(modelli):
+    if not is_admin:
+        st.error("Solo admin può salvare i modelli.")
+        return False
+
+    try:
+        ws = get_ws_by_name(FOGLIO_MODELLI)
+        values = [["chiave", "valore"]]
+
+        for chiave, valore in modelli.items():
+            values.append([chiave, valore])
+
+        ws.clear()
+        ws.update(values, value_input_option="USER_ENTERED")
+        carica_modelli_sheet.clear()
+        registra_log("Salva modelli", "", "Modelli messaggi aggiornati")
+        return True
+
+    except Exception as e:
+        st.error(f"Errore salvataggio modelli: {e}")
+        return False
+
+
+def compila_testo(testo, row, data, orario):
+    return (
+        str(testo)
+        .replace("[CLIENTE]", str(row.get("Cliente", "")))
+        .replace("[DATA]", data)
+        .replace("[ORARIO]", str(orario))
+        .replace("[IMPIANTO]", str(row.get("Impianto", "")))
+    )
+
+
+def valore_invio(v):
+    return str(v).strip() if pd.notna(v) and str(v).strip() else "—"
+
+
+def classe_stato(stato):
+    stato = str(stato).upper().strip()
+    if "AVVISATO" in stato:
+        return "status-avvisato"
+    if "CONFERMATO" in stato:
+        return "status-confermato"
+    if "FATTO" in stato:
+        return "status-fatto"
+    if "ANNULLATO" in stato:
+        return "status-annullato"
+    return "status-da-programmare"
+
+
+def badge_stato(stato):
+    return (
+        f'<div class="status-badge {classe_stato(stato)}">'
+        f'{str(stato).upper()}'
+        "</div>"
+    )
+
+
+def ordina_per_cliente(df_in):
+    return df_in.sort_values(
+        by="Cliente",
+        key=lambda s: s.astype(str).str.upper(),
+    )
+
+
+def ordina_per_data_lavaggio(df_in):
+    return df_in.sort_values(
+        by=["DataLavaggio_DT", "Cliente"],
+        ascending=[True, True],
+        na_position="first",
+        key=lambda s: s.astype(str).str.upper() if s.name == "Cliente" else s,
+    )
+
+
+def ordina_per_data_task(df_in):
+    return df_in.sort_values(
+        by=["Task_Due_DT", "Cliente"],
+        ascending=[True, True],
+        na_position="first",
+        key=lambda s: s.astype(str).str.upper() if s.name == "Cliente" else s,
+    )
+
+
+def email_valida(email):
+    email = str(email).strip()
+    return bool(re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email))
+
+
+def normalizza_telefono_whatsapp(tel):
+    num = "".join(filter(str.isdigit, str(tel)))
+    if num.startswith("3") and len(num) == 10:
+        num = "39" + num
+    return num
+
+
+def telefono_valido_whatsapp(tel):
+    num = normalizza_telefono_whatsapp(tel)
+    return len(num) >= 11 and num.startswith("39")
+
+
+def dettaglio_modifiche(row, aggiornamenti):
+    parti = []
+    for campo, nuovo in aggiornamenti.items():
+        vecchio = str(row.get(campo, "")).strip()
+        nuovo_str = str(nuovo).strip()
+        if vecchio != nuovo_str:
+            parti.append(f"{campo}: '{vecchio}' -> '{nuovo_str}'")
+    return " | ".join(parti) if parti else "Nessuna variazione"
+
+
+def log_per_cliente(cliente, limite=30):
+    df_log = carica_log_sheet()
+    if df_log.empty:
+        return df_log
+
+    mask = df_log["Cliente"].astype(str).str.strip().str.upper() == str(cliente).strip().upper()
+    out = df_log[mask].copy()
+    if "DataOra_DT" in out.columns:
+        out = out.sort_values(by="DataOra_DT", ascending=False, na_position="last")
+    return out.head(limite)
+
+
+def inizio_settimana(giorno):
+    return giorno - timedelta(days=giorno.weekday())
+
+
+def classe_evento_calendario(r):
+    stato = str(r.get("Stato", "")).upper()
+    giorni = r.get("GiorniMancanti", 999)
+
+    if "FATTO" in stato:
+        return "calendar-event-done"
+    if "CONFERMATO" in stato:
+        return "calendar-event-confirmed"
+    if pd.notna(giorni) and giorni <= 5:
+        return "calendar-event-urgent"
+    return "calendar-event-planned"
+
+
+def etichetta_stato_calendario(r):
+    stato = str(r.get("Stato", "")).upper()
+    giorni = r.get("GiorniMancanti", 999)
+
+    if "FATTO" in stato:
+        return "Fatto"
+    if "CONFERMATO" in stato:
+        return "Confermato"
+    if pd.notna(giorni) and giorni <= 5:
+        return "Urgente"
+    return "In programma"
+
+
+def lavaggi_per_calendario(df_in, includi_fatti=True):
+    if df_in.empty:
+        return pd.DataFrame()
+
+    stato = df_in["Stato"].astype(str).str.upper()
+    mask = (
+        (stato != "ANNULLATO DA CLIENTE")
+        & (df_in["DataLavaggio_DT"].notna())
+    )
+
+    if not includi_fatti:
+        mask = mask & (stato != "FATTO")
+
+    lavaggi = df_in[mask].copy()
+
+    if lavaggi.empty:
+        return lavaggi
+
+    lavaggi["_OrarioOrd"] = lavaggi["Orario"].astype(str).str.strip()
+    return lavaggi.sort_values(
+        by=["DataLavaggio_DT", "_OrarioOrd", "Cliente"],
+        ascending=[True, True, True],
+        key=lambda s: s.astype(str).str.upper() if s.name == "Cliente" else s,
+    )
+
+
+def lavaggi_confermati_per_calendario(df_in):
+    if df_in.empty:
+        return pd.DataFrame()
+
+    confermati = df_in[
+        (df_in["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE")
+        & (df_in["DataLavaggio_DT"].notna())
+    ].copy()
+
+    if confermati.empty:
+        return confermati
+
+    confermati["_OrarioOrd"] = confermati["Orario"].astype(str).str.strip()
+    return confermati.sort_values(
+        by=["DataLavaggio_DT", "_OrarioOrd", "Cliente"],
+        ascending=[True, True, True],
+        key=lambda s: s.astype(str).str.upper() if s.name == "Cliente" else s,
+    )
+
+
+def evento_calendario_html(r):
+    orario = html.escape(str(r.get("Orario", "")).strip() or "Orario n.d.")
+    cliente = html.escape(str(r.get("Cliente", "")).strip())
+    impianto = html.escape(str(r.get("Impianto", "")).strip())
+    fornitore = html.escape(str(r.get("Fornitore", "")).strip())
+    classe_evento = classe_evento_calendario(r)
+    stato_label = html.escape(etichetta_stato_calendario(r))
+    idx = urllib.parse.quote(str(r.name))
+
+    extra = impianto
+    if fornitore:
+        extra = f"{extra}<br>{fornitore}" if extra else fornitore
+
+    return (
+        f'<div class="calendar-event {classe_evento}">'
+        f'<a class="calendar-event-link" href="?selected_idx={idx}" target="_self">'
+        f'<div class="calendar-event-time">{orario} · {stato_label}</div>'
+        f'<div class="calendar-event-client">{cliente}</div>'
+        f'<div>{extra}</div>'
+        "</a>"
+        "</div>"
+    )
+
+
+def cella_calendario_html(giorno, eventi, titolo=None, muted=False, max_eventi=None):
+    classe_muted = " calendar-cell-muted" if muted else ""
+    classe_oggi = " calendar-cell-today" if giorno == date.today() else ""
+    classe_data_oggi = " calendar-date-today" if giorno == date.today() else ""
+    if titolo == "":
+        titolo_html = ""
+    else:
+        titolo_testo = html.escape(titolo or str(giorno.day))
+        if giorno == date.today():
+            titolo_testo = f"Oggi · {titolo_testo}"
+        titolo_html = f'<div class="calendar-date {classe_data_oggi}">{titolo_testo}</div>'
+
+    contenuto = ""
+    eventi_da_mostrare = eventi if max_eventi is None else eventi.head(max_eventi)
+    for _, r in eventi_da_mostrare.iterrows():
+        contenuto += evento_calendario_html(r)
+
+    if eventi.empty:
+        contenuto = '<div class="calendar-empty">Nessun lavaggio</div>'
+    elif max_eventi is not None and len(eventi) > max_eventi:
+        contenuto += f'<div class="calendar-empty">+{len(eventi) - max_eventi} altri</div>'
+
+    return f'<div class="calendar-cell{classe_muted}{classe_oggi}">{titolo_html}{contenuto}</div>'
+
+
+def render_giorno_calendario(df_cal, giorno):
+    eventi = df_cal[df_cal["DataLavaggio_DT"] == giorno]
+    st.markdown(f"#### {giorno.strftime('%d/%m/%Y')}")
+
+    if eventi.empty:
+        st.info("Nessun lavaggio confermato in questa giornata.")
+        return
+
+    for _, r in eventi.iterrows():
+        st.markdown(evento_calendario_html(r), unsafe_allow_html=True)
+
+
+def render_settimana_calendario(df_cal, giorno):
+    start = inizio_settimana(giorno)
+    giorni = [start + timedelta(days=i) for i in range(7)]
+    nomi = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
+    cols = st.columns(7)
+
+    for i, g in enumerate(giorni):
+        eventi = df_cal[df_cal["DataLavaggio_DT"] == g]
+        with cols[i]:
+            st.markdown(f'<div class="calendar-day-title">{nomi[i]} {g.strftime("%d/%m")}</div>', unsafe_allow_html=True)
+            st.markdown(cella_calendario_html(g, eventi, titolo="", max_eventi=4), unsafe_allow_html=True)
+
+
+def render_mese_calendario(df_cal, giorno):
+    primo = giorno.replace(day=1)
+    if primo.month == 12:
+        prossimo_mese = primo.replace(year=primo.year + 1, month=1)
+    else:
+        prossimo_mese = primo.replace(month=primo.month + 1)
+
+    ultimo = prossimo_mese - timedelta(days=1)
+    start = inizio_settimana(primo)
+    end = inizio_settimana(ultimo) + timedelta(days=6)
+    giorni = []
+    corrente = start
+
+    while corrente <= end:
+        giorni.append(corrente)
+        corrente += timedelta(days=1)
+
+    st.markdown(f"#### {primo.strftime('%m/%Y')}")
+    nomi = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
+    header_cols = st.columns(7)
+    for i, nome in enumerate(nomi):
+        header_cols[i].markdown(f'<div class="calendar-day-title">{nome}</div>', unsafe_allow_html=True)
+
+    for settimana_start in range(0, len(giorni), 7):
+        cols = st.columns(7)
+        for i, g in enumerate(giorni[settimana_start:settimana_start + 7]):
+            eventi = df_cal[df_cal["DataLavaggio_DT"] == g]
+            muted = " calendar-cell-muted" if g.month != primo.month else ""
+            with cols[i]:
+                st.markdown(
+                    cella_calendario_html(g, eventi, titolo=str(g.day), muted=bool(muted), max_eventi=3),
+                    unsafe_allow_html=True,
+                )
+
+
+def render_calendario_confermati(df_in):
+    df_cal = lavaggi_per_calendario(df_in, includi_fatti=True)
+
+    st.markdown('<div class="calendar-shell">', unsafe_allow_html=True)
+    st.markdown('<div class="calendar-title">📅 Calendario Lavaggi</div>', unsafe_allow_html=True)
+
+    c1, c2 = st.columns([4, 1])
+    with c1:
+        vista = st.radio(
+            "Vista calendario",
+            ["Settimana", "Mese", "Giorno"],
+            horizontal=True,
+            key="calendar_view",
+        )
+    with c2:
+        if st.button("Oggi", use_container_width=True, key="calendar_today_dashboard"):
+            st.session_state.calendar_ref_date = date.today()
+            st.rerun()
+
+    if "calendar_ref_date" not in st.session_state:
+        st.session_state.calendar_ref_date = date.today()
+    giorno = st.session_state.calendar_ref_date
+
+    if df_cal.empty:
+        st.info("Nessun lavaggio con data disponibile.")
+    elif vista == "Giorno":
+        render_giorno_calendario(df_cal, giorno)
+    elif vista == "Mese":
+        render_mese_calendario(df_cal, giorno)
+    else:
+        render_settimana_calendario(df_cal, giorno)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_calendario_avanzato(df_in):
+    st.markdown('<div class="calendar-shell">', unsafe_allow_html=True)
+    st.markdown('<div class="calendar-title">📅 Calendario Operativo Lavaggi</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="legend-row">
+            <span class="legend-item">🟩 Confermati</span>
+            <span class="legend-item">🟦 Fatti</span>
+            <span class="legend-item">🟨 In programma</span>
+            <span class="legend-item">🟧 Meno di 5 giorni non confermati</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if "cal_mese_rif" not in st.session_state:
+        st.session_state.cal_mese_rif = date.today().replace(day=1)
+
+    nav1, nav2, nav3, nav4 = st.columns([1, 1, 2, 1])
+    with nav1:
+        if st.button("← Mese prec.", use_container_width=True):
+            rif = st.session_state.cal_mese_rif
+            if rif.month == 1:
+                st.session_state.cal_mese_rif = rif.replace(year=rif.year - 1, month=12)
+            else:
+                st.session_state.cal_mese_rif = rif.replace(month=rif.month - 1)
+            st.rerun()
+
+    with nav2:
+        if st.button("Oggi", use_container_width=True):
+            st.session_state.cal_mese_rif = date.today().replace(day=1)
+            st.rerun()
+
+    with nav3:
+        mese_corrente = st.session_state.cal_mese_rif.strftime("%m/%Y")
+        st.markdown(
+            f"<div class='calendar-title' style='text-align:center; margin-top:8px;'>{mese_corrente}</div>",
+            unsafe_allow_html=True,
+        )
+
+    with nav4:
+        if st.button("Mese succ. →", use_container_width=True):
+            rif = st.session_state.cal_mese_rif
+            if rif.month == 12:
+                st.session_state.cal_mese_rif = rif.replace(year=rif.year + 1, month=1)
+            else:
+                st.session_state.cal_mese_rif = rif.replace(month=rif.month + 1)
+            st.rerun()
+
+    df_cal = lavaggi_per_calendario(df_in, includi_fatti=True)
+    if df_cal.empty:
+        st.info("Nessun lavaggio con data disponibile.")
+    else:
+        render_mese_calendario(df_cal, st.session_state.cal_mese_rif)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ==========================================================
+# 6. SESSIONE
+# ==========================================================
+if "loggato" not in st.session_state:
+    st.session_state.loggato = False
+
+if "utente" not in st.session_state:
+    st.session_state.utente = None
+
+if "ruolo" not in st.session_state:
+    st.session_state.ruolo = "ospite"
+
+if "df" not in st.session_state:
+    st.session_state.df = carica_dati()
+
+if "selected_idx" not in st.session_state:
+    st.session_state.selected_idx = None
+
+if "dash_filter" not in st.session_state:
+    st.session_state.dash_filter = "Tutti"
+
+if "modelli" not in st.session_state:
+    st.session_state.modelli = carica_modelli_sheet()
+
+try:
+    selected_from_url = st.query_params.get("selected_idx")
+    if selected_from_url is not None:
+        st.session_state.selected_idx = int(selected_from_url)
+except Exception:
+    pass
+
+
+is_admin = st.session_state.ruolo == "admin"
+can_edit_client = st.session_state.ruolo in ["admin", "supervisor"]
+can_send_comms = st.session_state.ruolo in ["admin", "supervisor"]
+
+
+# ==========================================================
+# 7. SIDEBAR
+# ==========================================================
+with st.sidebar:
+    st.markdown("### 🧼 FV WASH MANAGER")
+
+    if not st.session_state.loggato:
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+
+        if st.button("🔐 Login"):
+            login(username, password)
+
+    else:
+        st.success(f"{st.session_state.utente} · {st.session_state.ruolo}")
+
+        if st.button("🔓 Logout"):
+            logout()
+
+    st.divider()
+
+    pagine = ["Dashboard", "Modelli Messaggi", "Fornitori", "Calendario"]
+
+    if is_admin:
+        pagine += ["Gestione Utenti", "Log"]
+
+    pagine += ["Impostazioni"]
+    pagina = st.radio("Navigazione", pagine)
+
+    st.divider()
+
+    if is_admin:
+        st.link_button("📊 Apri Google Sheet", SHEET_URL, use_container_width=True)
+
+    if st.button("🔄 Aggiorna Dati"):
+        carica_utenti.clear()
+        carica_modelli_sheet.clear()
+        st.session_state.modelli = carica_modelli_sheet()
+        st.session_state.df = carica_dati()
+        registra_log("Aggiorna dati", "", "Aggiornamento manuale dati")
+        st.rerun()
+
+
+# ==========================================================
+# 8. DASHBOARD
+# ==========================================================
+df = st.session_state.df
+
+if pagina == "Dashboard":
+    st.markdown(
+        '<div class="hero"><h1>FV WASH MANAGER</h1><p>Controllo Operativo Interventi</p></div>',
+        unsafe_allow_html=True,
+    )
+
+    if df.empty:
+        st.warning("Nessun dato disponibile.")
+        st.stop()
+
+    oggi = date.today()
+
+    urg_no_mail = df[
+        (df["GiorniMancanti"].between(0, 5))
+        & (df["DataPromemoria3gg"].astype(str).str.strip() == "")
+        & (df["Stato"].astype(str).str.upper() != "FATTO")
+    ]
+
+    manca_30gg = df[
+        (df["GiorniMancanti"] > 15)
+        & (df["DataPromemoria"].astype(str).str.strip() == "")
+        & (df["Stato"].astype(str).str.upper() != "ANNULLATO DA CLIENTE")
+    ]
+
+    task_scadenza = df[
+        df["Task_Due_DT"].apply(
+            lambda x: pd.notna(x) and -1 <= (x - oggi).days <= 3
+        )
+    ]
+
+    df_tutti = ordina_per_cliente(df)
+    df_conf = ordina_per_data_lavaggio(
+        df[df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE"]
+    )
+    df_urg = ordina_per_data_lavaggio(df[
+        (df["GiorniMancanti"].between(0, 15))
+        & (df["Stato"].astype(str).str.upper() != "FATTO")
+        & (df["Stato"].astype(str).str.upper() != "CONFERMATO DA CLIENTE")
+    ])
+    df_comp = ordina_per_data_lavaggio(
+        df[df["Stato"].astype(str).str.upper() == "FATTO"]
+    )
+    df_da_fare = ordina_per_data_lavaggio(df[
+        (df["Stato"].astype(str).str.upper() != "FATTO")
+        & (df["Stato"].astype(str).str.upper() != "ANNULLATO DA CLIENTE")
+    ])
+    df_annullati = ordina_per_data_lavaggio(
+        df[df["Stato"].astype(str).str.upper() == "ANNULLATO DA CLIENTE"]
+    )
+    df_senza_data = ordina_per_cliente(df[df["DataLavaggio_DT"].isna()])
+
+    k_cols = st.columns(7)
+    kpis = [
+        ("Tutti", "📋", len(df_tutti)),
+        ("Confermati", "👍", len(df_conf)),
+        ("Urgenze", "🔥", len(df_urg)),
+        ("Completati", "✅", len(df_comp)),
+        ("Da Fare", "🛠️", len(df_da_fare)),
+        ("Annullati", "❌", len(df_annullati)),
+        ("Senza Data", "📌", len(df_senza_data)),
+    ]
+
+    for i, (name, icon, count) in enumerate(kpis):
+        with k_cols[i]:
+            active_class = "kpi-btn-active" if st.session_state.dash_filter == name else ""
+            st.markdown(f'<div class="kpi-btn {active_class}">', unsafe_allow_html=True)
+
+            if st.button(f"{icon}\n{count}\n{name}", key=f"f_{name}", use_container_width=True):
+                st.session_state.dash_filter = name
+                st.rerun()
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown('<div class="compact-alert-title">⚠️ Centro Avvisi</div>', unsafe_allow_html=True)
+    a1, a2, a3 = st.columns(3)
+
+    with a1:
+        if st.button(
+            f"🚨 3gg: {len(urg_no_mail)}",
+            disabled=urg_no_mail.empty,
+            use_container_width=True,
+            key="alert_3gg_compact",
+        ):
+            st.session_state.dash_filter = "Alert: Reminder 3gg"
+            st.rerun()
+
+    with a2:
+        if st.button(
+            f"📧 30gg: {len(manca_30gg)}",
+            disabled=manca_30gg.empty,
+            use_container_width=True,
+            key="alert_30gg_compact",
+        ):
+            st.session_state.dash_filter = "Alert: Avvisi 30gg"
+            st.rerun()
+
+    with a3:
+        if st.button(
+            f"🔔 Task: {len(task_scadenza)}",
+            disabled=task_scadenza.empty,
+            use_container_width=True,
+            key="alert_task_compact",
+        ):
+            st.session_state.dash_filter = "Alert: Task Reminder"
+            st.rerun()
+
+    render_calendario_confermati(df)
+
+    st.markdown(
+        """
+        <div class="legend-row">
+            <span class="legend-item">🟩 Confermato</span>
+            <span class="legend-item">🟨 Avvisato</span>
+            <span class="legend-item">🟦 Fatto</span>
+            <span class="legend-item">🔴 Urgente / scaduto</span>
+            <span class="legend-item">⚪ Annullato / da programmare</span>
+            <span class="legend-item">📌 Senza data</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    filtro_fornitori = ["Tutti"]
+    if "Fornitore" in df.columns:
+        filtro_fornitori += sorted(
+            [f for f in df["Fornitore"].astype(str).str.strip().unique().tolist() if f],
+            key=str.upper,
+        )
+
+    cf1, cf2 = st.columns([1.2, 1])
+    search = cf1.text_input("🔍 Cerca cliente, impianto, email, telefono o note...")
+    filtro_fornitore = cf2.selectbox("Fornitore", filtro_fornitori)
+
+    st.divider()
+
+    if st.session_state.dash_filter == "Alert: Reminder 3gg":
+        df_view = ordina_per_data_lavaggio(urg_no_mail)
+    elif st.session_state.dash_filter == "Alert: Avvisi 30gg":
+        df_view = ordina_per_data_lavaggio(manca_30gg)
+    elif st.session_state.dash_filter == "Alert: Task Reminder":
+        df_view = ordina_per_data_task(task_scadenza)
+    elif st.session_state.dash_filter == "Tutti":
+        df_view = df_tutti
+    elif st.session_state.dash_filter == "Confermati":
+        df_view = df_conf
+    elif st.session_state.dash_filter == "Urgenze":
+        df_view = df_urg
+    elif st.session_state.dash_filter == "Completati":
+        df_view = df_comp
+    elif st.session_state.dash_filter == "Da Fare":
+        df_view = df_da_fare
+    elif st.session_state.dash_filter == "Senza Data":
+        df_view = df_senza_data
+    else:
+        df_view = df_annullati
+
+    if filtro_fornitore != "Tutti":
+        df_view = df_view[df_view["Fornitore"].astype(str).str.strip() == filtro_fornitore]
+
+    if search:
+        campi_ricerca = ["Cliente", "Impianto", "EmailCliente", "Telefono", "Note", "Fornitore"]
+        mask_search = pd.Series(False, index=df_view.index)
+        for campo in campi_ricerca:
+            if campo in df_view.columns:
+                mask_search = mask_search | df_view[campo].astype(str).str.contains(search, case=False, na=False)
+        df_view = df_view[mask_search]
+
+    col_l, col_r = st.columns([1, 1.8], gap="large")
+
+    with col_l:
+        st.markdown(f"### 📅 {st.session_state.dash_filter}")
+
+        for idx, r in df_view.head(60).iterrows():
+            stato = str(r["Stato"]).upper()
+            gm = r["GiorniMancanti"]
+            senza_data = pd.isna(r["DataLavaggio_DT"])
+
+            if senza_data:
+                dot = "📌"
+            elif stato == "FATTO":
+                dot = "🟦"
+            elif "ANNULLATO" in stato:
+                dot = "⚪"
+            elif "CONFERMATO" in stato:
+                dot = "🟩"
+            elif "AVVISATO" in stato:
+                dot = "🟨"
+            elif gm < 0:
+                dot = "🔴"
+            elif gm <= 3:
+                dot = "🔴"
+            elif str(r.get("DataPromemoria", "")).strip() == "" and str(r.get("DataWA30gg", "")).strip() == "":
+                dot = "🟡"
+            else:
+                dot = "⚪"
+
+            data_label = str(r["DataLavaggio"]).strip() if str(r["DataLavaggio"]).strip() else "SENZA DATA"
+            label = f"{dot} {data_label} - {str(r['Cliente']).upper()}"
+
+            if st.button(label, key=f"sel_{idx}", use_container_width=True):
+                st.session_state.selected_idx = idx
+                st.rerun()
+
+    with col_r:
+        if st.session_state.selected_idx is None:
+            st.info("Seleziona un cliente dalla lista.")
+        else:
+            row = df.loc[st.session_state.selected_idx]
+
+            st.markdown(
+                f'<div class="card"><h2 style="margin-top:0;">{row["Cliente"]}</h2>',
+                unsafe_allow_html=True,
+            )
+
+            if not can_edit_client:
+                st.warning("🔒 Sola lettura. Accedi con ruolo admin o supervisor per modificare.")
+
+            st.markdown('<div class="section-title section-title-first">📡 Storico Invii Promemoria</div>', unsafe_allow_html=True)
+            i1, i2, i3, i4 = st.columns(4)
+
+            box_style = (
+                "background:#f8fafc; padding:12px 8px; border-radius:12px; "
+                "border:1px solid #e2e8f0; text-align:center; line-height:1.4;"
+            )
+
+            i1.markdown(f"<div style='{box_style}'><b>Mail 30gg</b><br>{valore_invio(row.get('DataPromemoria',''))}</div>", unsafe_allow_html=True)
+            i2.markdown(f"<div style='{box_style}'><b>WA 30gg</b><br>{valore_invio(row.get('DataWA30gg',''))}</div>", unsafe_allow_html=True)
+            i3.markdown(f"<div style='{box_style}'><b>Mail 3gg</b><br>{valore_invio(row.get('DataPromemoria3gg',''))}</div>", unsafe_allow_html=True)
+            i4.markdown(f"<div style='{box_style}'><b>WA 3gg</b><br>{valore_invio(row.get('DataWA3gg',''))}</div>", unsafe_allow_html=True)
+
+            st.markdown('<div class="section-title">👤 Anagrafica</div>', unsafe_allow_html=True)
+            colonna_potenza = nome_colonna_potenza(df)
+            c1, c2, c_pot = st.columns([1.1, 1.5, 0.8])
+            n_cl = c1.text_input("Nome Cliente", row["Cliente"], disabled=not can_edit_client)
+            n_im = c2.text_input("Impianto", row["Impianto"], disabled=not can_edit_client)
+            n_potenza = c_pot.text_input(
+                "Potenza impianto (kW)",
+                row.get(colonna_potenza, ""),
+                disabled=not can_edit_client,
+            )
+
+            c6, c7 = st.columns(2)
+            n_tel = c6.text_input("Telefono", row["Telefono"], disabled=not can_edit_client)
+            n_ml = c7.text_input("Email Cliente", row["EmailCliente"], disabled=not can_edit_client)
+
+            st.markdown('<div class="section-title">📅 Programmazione e Stato</div>', unsafe_allow_html=True)
+            c3, c4, c5 = st.columns(3)
+
+            data_lavaggio_mancante = pd.isna(row["DataLavaggio_DT"])
+            d_dt = row["DataLavaggio_DT"] if not data_lavaggio_mancante else date.today()
+            cancella_data_lavaggio = c3.checkbox(
+                "Cancella data",
+                value=data_lavaggio_mancante,
+                disabled=not can_edit_client,
+                key=f"clear_data_lavaggio_{st.session_state.selected_idx}",
+            )
+
+            n_dt = c3.date_input(
+                "Data Lavaggio",
+                d_dt,
+                format="DD/MM/YYYY",
+                disabled=not can_edit_client or cancella_data_lavaggio,
+            )
+
+            n_or = c4.text_input(
+                "Orario",
+                row["Orario"],
+                disabled=not can_edit_client,
+            )
+
+            nuova_data_lavaggio_txt = "" if cancella_data_lavaggio or n_dt is None else n_dt.strftime("%d/%m/%Y")
+            data_lavaggio_attuale_txt = str(row.get("DataLavaggio", "")).strip()
+            data_lavaggio_modificata = nuova_data_lavaggio_txt != data_lavaggio_attuale_txt
+
+            motivo_cambio_data = ""
+            dettaglio_cambio_data = ""
+            if data_lavaggio_modificata:
+                st.warning("La data lavaggio è stata modificata: indica il motivo prima di salvare.")
+                m1, m2 = st.columns([1, 2])
+                motivo_cambio_data = m1.selectbox(
+                    "Motivo cambio data",
+                    ["", "Richiesta cliente", "Richiesta fornitore", "Meteo", "Problema tecnico", "Altro"],
+                    key=f"motivo_cambio_data_{st.session_state.selected_idx}",
+                    disabled=not can_edit_client,
+                )
+                dettaglio_cambio_data = m2.text_input(
+                    "Dettaglio motivo",
+                    key=f"dettaglio_cambio_data_{st.session_state.selected_idx}",
+                    disabled=not can_edit_client,
+                    placeholder="Es. cliente non disponibile, fornitore rinvia, pioggia...",
+                )
+
+            stati = [
+                "DA PROGRAMMARE",
+                "AVVISATO CLIENTE",
+                "CONFERMATO DA CLIENTE",
+                "FATTO",
+                "ANNULLATO DA CLIENTE",
+            ]
+            curr_st = row["Stato"] if row["Stato"] in stati else "DA PROGRAMMARE"
+
+            with c5:
+                n_st = st.selectbox(
+                    "Stato",
+                    stati,
+                    index=stati.index(curr_st),
+                    disabled=not can_edit_client,
+                )
+                st.markdown(badge_stato(n_st), unsafe_allow_html=True)
+                if st.button(
+                    "💾 Salva stato",
+                    key=f"save_stato_{st.session_state.selected_idx}",
+                    disabled=not can_edit_client,
+                    use_container_width=True,
+                ):
+                    if salva_sheet(st.session_state.selected_idx, {"Stato": n_st}):
+                        registra_log("Aggiorna stato", row["Cliente"], f"Stato: {row['Stato']} -> {n_st}")
+                        st.success("Stato aggiornato.")
+                        st.session_state.df = carica_dati()
+                        st.rerun()
+
+            r1, r2 = st.columns(2)
+            with r1:
+                if st.button(
+                    "📌 RIPROGRAMMA",
+                    disabled=not can_edit_client,
+                    use_container_width=True,
+                    key=f"riprogramma_{st.session_state.selected_idx}",
+                ):
+                    aggiornamenti = {
+                        "DataLavaggio": "",
+                        "Orario": "",
+                        "Stato": "DA PROGRAMMARE",
+                        "Promemoria30gg": "",
+                        "DataPromemoria": "",
+                        "Promemoria3gg": "",
+                        "DataPromemoria3gg": "",
+                        "DataWA30gg": "",
+                        "DataWA3gg": "",
+                    }
+                    if salva_sheet(st.session_state.selected_idx, aggiornamenti):
+                        registra_log("Riprogramma", row["Cliente"], "Data/orario cancellati, stato a DA PROGRAMMARE, promemoria azzerati")
+                        st.success("Lavaggio rimesso da programmare.")
+                        st.session_state.df = carica_dati()
+                        st.rerun()
+
+            with r2:
+                if st.button(
+                    "🧹 RESET PROMEMORIA",
+                    disabled=not can_edit_client,
+                    use_container_width=True,
+                    key=f"reset_promemoria_{st.session_state.selected_idx}",
+                ):
+                    aggiornamenti = {
+                        "Promemoria30gg": "",
+                        "DataPromemoria": "",
+                        "Promemoria3gg": "",
+                        "DataPromemoria3gg": "",
+                        "DataWA30gg": "",
+                        "DataWA3gg": "",
+                    }
+                    if salva_sheet(st.session_state.selected_idx, aggiornamenti):
+                        registra_log("Reset promemoria", row["Cliente"], "Promemoria e date invio azzerati")
+                        st.success("Promemoria azzerati.")
+                        st.session_state.df = carica_dati()
+                        st.rerun()
+
+            st.markdown('<div class="section-title">🔔 Reminder e Note</div>', unsafe_allow_html=True)
+            n_note = st.text_area("Note", row["Note"], height=70, disabled=not can_edit_client)
+            c8, c9 = st.columns([2, 1])
+            n_task = c8.text_input("Azione", row["Task_Rem"], disabled=not can_edit_client)
+            task_date = row["Task_Due_DT"] if pd.notna(row["Task_Due_DT"]) else None
+            n_task_due = c9.date_input("Scadenza", task_date, format="DD/MM/YYYY", disabled=not can_edit_client)
+
+            if st.button("💾 AGGIORNA DATI CLIENTE", type="primary", disabled=not can_edit_client):
+                if data_lavaggio_modificata and not motivo_cambio_data:
+                    st.error("Per modificare o cancellare la data lavaggio devi indicare il motivo.")
+                else:
+                    aggiornamenti = {
+                        "Cliente": n_cl,
+                        "Impianto": n_im,
+                        colonna_potenza: n_potenza,
+                        "DataLavaggio": nuova_data_lavaggio_txt,
+                        "Orario": "" if cancella_data_lavaggio else n_or,
+                        "Stato": n_st,
+                        "Telefono": n_tel,
+                        "EmailCliente": n_ml,
+                        "Note": n_note,
+                        "Task_Rem": n_task,
+                        "Task_Due": n_task_due.strftime("%d/%m/%Y") if n_task_due else "",
+                    }
+                    ok = salva_sheet(st.session_state.selected_idx, aggiornamenti)
+                    if ok:
+                        registra_log("Aggiorna cliente", row["Cliente"], dettaglio_modifiche(row, aggiornamenti))
+                        if data_lavaggio_modificata:
+                            dettaglio_log_data = (
+                                f"DataLavaggio: '{data_lavaggio_attuale_txt}' -> '{nuova_data_lavaggio_txt}' "
+                                f"| Motivo: {motivo_cambio_data}"
+                            )
+                            if dettaglio_cambio_data:
+                                dettaglio_log_data += f" | Dettaglio: {dettaglio_cambio_data}"
+                            registra_log("Cambio data lavaggio", row["Cliente"], dettaglio_log_data)
+                        st.success("Dati aggiornati.")
+                        st.session_state.df = carica_dati()
+                        st.rerun()
+
+            st.markdown('<div class="section-title">🚀 Invio Comunicazioni</div>', unsafe_allow_html=True)
+
+            tipo = "3" if row["GiorniMancanti"] <= 5 else "30"
+            data_txt = "" if cancella_data_lavaggio or n_dt is None else n_dt.strftime("%d/%m/%Y")
+            mod = st.session_state.modelli
+            data_mancante = data_txt == ""
+
+            if data_mancante:
+                st.warning("Inserisci una data lavaggio prima di inviare comunicazioni.")
+
+            ca, cb, cc = st.columns(3)
+
+            if ca.button(
+                f"✉️ Email {tipo}gg",
+                disabled=not can_send_comms or data_mancante,
+                use_container_width=True,
+            ):
+                if not email_valida(n_ml):
+                    st.error("Email cliente mancante o non valida.")
+                else:
+                    ogg = compila_testo(mod[f"mail_{tipo}_ogg"], row, data_txt, n_or)
+                    txt = compila_testo(mod[f"mail_{tipo}_txt"], row, data_txt, n_or)
+                    if tipo == "3":
+                        aggiornamenti = {
+                            "DataPromemoria3gg": date.today().strftime("%d/%m/%Y"),
+                            "Promemoria3gg": "SI",
+                            "Stato": "AVVISATO CLIENTE",
+                        }
+                    else:
+                        aggiornamenti = {
+                            "DataPromemoria": date.today().strftime("%d/%m/%Y"),
+                            "Promemoria30gg": "SI",
+                            "Stato": "AVVISATO CLIENTE",
+                        }
+
+                    if salva_sheet(st.session_state.selected_idx, aggiornamenti):
+                        registra_log("Invio email", row["Cliente"], f"Promemoria {tipo}gg a {n_ml}")
+                        st.session_state.df = carica_dati()
+                        url = f"mailto:{n_ml}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}"
+                        st.markdown(f'<a href="{url}" target="_blank" class="action-link action-mail">APRI EMAIL</a>', unsafe_allow_html=True)
+
+            if cb.button(
+                f"💬 WhatsApp {tipo}gg",
+                disabled=not can_send_comms or data_mancante,
+                use_container_width=True,
+            ):
+                if not telefono_valido_whatsapp(n_tel):
+                    st.error("Telefono mancante o non valido per WhatsApp.")
+                else:
+                    txt = compila_testo(mod[f"wa_{tipo}_txt"], row, data_txt, n_or)
+                    num = normalizza_telefono_whatsapp(n_tel)
+                    if tipo == "3":
+                        aggiornamenti = {
+                            "DataWA3gg": date.today().strftime("%d/%m/%Y"),
+                            "Promemoria3gg": "SI",
+                            "Stato": "AVVISATO CLIENTE",
+                        }
+                    else:
+                        aggiornamenti = {
+                            "DataWA30gg": date.today().strftime("%d/%m/%Y"),
+                            "Promemoria30gg": "SI",
+                            "Stato": "AVVISATO CLIENTE",
+                        }
+
+                    if salva_sheet(st.session_state.selected_idx, aggiornamenti):
+                        registra_log("Invio WhatsApp", row["Cliente"], f"Promemoria {tipo}gg al numero {num}")
+                        st.session_state.df = carica_dati()
+                        url = f"https://wa.me/{num}?text={urllib.parse.quote(txt)}"
+                        st.markdown(f'<a href="{url}" target="_blank" class="action-link action-wa">APRI WHATSAPP</a>', unsafe_allow_html=True)
+
+            if cc.button(
+                "👷 Email Fornitore",
+                disabled=not can_send_comms or n_st != "CONFERMATO DA CLIENTE" or data_mancante,
+                use_container_width=True,
+            ):
+                mail_fornitore = mod.get("mail_fornitore", "")
+                if not email_valida(mail_fornitore):
+                    st.error("Email fornitore mancante o non valida.")
+                else:
+                    ogg = compila_testo(mod["mail_forn_ogg"], row, data_txt, n_or)
+                    txt = compila_testo(mod["mail_forn_txt"], row, data_txt, n_or)
+                    registra_log("Email fornitore", row["Cliente"], f"Mail generata per {mail_fornitore}")
+                    url = f"mailto:{mail_fornitore}?subject={urllib.parse.quote(ogg)}&body={urllib.parse.quote(txt)}"
+                    st.markdown(f'<a href="{url}" target="_blank" class="action-link action-supplier">AVVISA FORNITORE</a>', unsafe_allow_html=True)
+
+            st.markdown('<div class="section-title">🧾 Log Cliente</div>', unsafe_allow_html=True)
+            df_log_cliente = log_per_cliente(row["Cliente"])
+            if df_log_cliente.empty:
+                st.info("Nessuna modifica registrata per questo cliente.")
+            else:
+                st.dataframe(
+                    df_log_cliente[["DataOra", "Utente", "Azione", "Dettaglio"]],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ==========================================================
+# 9. MODELLI MESSAGGI
+# ==========================================================
+elif pagina == "Modelli Messaggi":
+    st.title("📝 Modelli Messaggi")
+
+    mod = st.session_state.modelli.copy()
+
+    if not is_admin:
+        st.info("Solo admin può modificare i modelli. Gli altri utenti possono consultarli.")
+
+    mod["mail_fornitore"] = st.text_input(
+        "Email Fornitore",
+        mod.get("mail_fornitore", ""),
+        disabled=not is_admin,
+    )
+
+    with st.expander("Email Clienti", expanded=True):
+        c1, c2 = st.columns(2)
+        mod["mail_30_ogg"] = c1.text_input("Oggetto 30gg", mod.get("mail_30_ogg", ""), disabled=not is_admin)
+        mod["mail_30_txt"] = c1.text_area("Testo 30gg", mod.get("mail_30_txt", ""), disabled=not is_admin)
+        mod["mail_3_ogg"] = c2.text_input("Oggetto 3gg", mod.get("mail_3_ogg", ""), disabled=not is_admin)
+        mod["mail_3_txt"] = c2.text_area("Testo 3gg", mod.get("mail_3_txt", ""), disabled=not is_admin)
+
+    with st.expander("WhatsApp", expanded=True):
+        mod["wa_30_txt"] = st.text_area("WhatsApp 30gg", mod.get("wa_30_txt", ""), disabled=not is_admin)
+        mod["wa_3_txt"] = st.text_area("WhatsApp 3gg", mod.get("wa_3_txt", ""), disabled=not is_admin)
+
+    with st.expander("Fornitore", expanded=True):
+        mod["mail_forn_ogg"] = st.text_input("Oggetto Fornitore", mod.get("mail_forn_ogg", ""), disabled=not is_admin)
+        mod["mail_forn_txt"] = st.text_area("Testo Fornitore", mod.get("mail_forn_txt", ""), disabled=not is_admin)
+
+    if st.button("💾 SALVA MODELLI", type="primary", disabled=not is_admin):
+        if salva_modelli_sheet(mod):
+            st.session_state.modelli = carica_modelli_sheet()
+            st.success("Modelli salvati su Google Sheet.")
+            st.rerun()
+
+
+# ==========================================================
+# 10. FORNITORI
+# ==========================================================
+elif pagina == "Fornitori":
+    st.title("👷 Resoconto Fornitore")
+
+    limite = date.today() + timedelta(days=30)
+    fornitori = ["Tutti"]
+    if "Fornitore" in df.columns:
+        fornitori += sorted([f for f in df["Fornitore"].astype(str).str.strip().unique().tolist() if f], key=str.upper)
+    filtro_fornitore_f = st.selectbox("Fornitore", fornitori)
+
+    df_f = df[
+        (df["DataLavaggio_DT"].between(date.today(), limite))
+        & (df["Stato"].astype(str).str.upper() != "ANNULLATO DA CLIENTE")
+    ].sort_values(by="DataLavaggio_DT", na_position="first")
+
+    if filtro_fornitore_f != "Tutti":
+        df_f = df_f[df_f["Fornitore"].astype(str).str.strip() == filtro_fornitore_f]
+
+    st.write(f"Lavaggi programmati entro il {limite.strftime('%d/%m/%Y')}: **{len(df_f)}**")
+
+    if not df_f.empty:
+        st.dataframe(
+            df_f[["DataLavaggio", "Orario", "Cliente", "Impianto", "Stato", "Fornitore"]],
+            use_container_width=True,
+        )
+
+        testo = "Buongiorno,\ndi seguito il riepilogo dei lavaggi dei prossimi 30 giorni:\n\n"
+        for _, r in df_f.iterrows():
+            testo += f"- {r['DataLavaggio']} {r['Orario']}: {r['Cliente']} | {r['Impianto']} | Stato: {r['Stato']}\n"
+
+        if st.button("Genera Email Fornitore", disabled=not can_send_comms):
+            st.code(testo)
+            mail_fornitore = st.session_state.modelli["mail_fornitore"]
+            if not email_valida(mail_fornitore):
+                st.error("Email fornitore mancante o non valida.")
+            else:
+                registra_log("Riepilogo fornitore", filtro_fornitore_f, f"Riepilogo {len(df_f)} lavaggi")
+                url = (
+                    f"mailto:{mail_fornitore}"
+                    f"?subject=Riepilogo Lavaggi 30gg"
+                    f"&body={urllib.parse.quote(testo)}"
+                )
+                st.markdown(f'<a href="{url}" target="_blank" class="action-link action-supplier">INVIA AL FORNITORE</a>', unsafe_allow_html=True)
+
+
+# ==========================================================
+# 11. CALENDARIO
+# ==========================================================
+elif pagina == "Calendario":
+    st.title("📅 Esporta Calendario")
+
+    render_calendario_avanzato(df)
+
+    st.divider()
+    st.markdown("### Esporta eventi confermati")
+
+    conf = df[
+        (df["Stato"].astype(str).str.upper() == "CONFERMATO DA CLIENTE")
+        & (df["EventoCalendarioCreato"].astype(str).str.upper() != "SI")
+    ]
+
+    if conf.empty:
+        st.info("Nessun nuovo evento confermato da esportare.")
+    else:
+        ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//FV Wash Manager//IT\n"
+
+        for _, r in conf.iterrows():
+            dt = r["DataLavaggio_DT"]
+
+            if pd.notna(dt):
+                data_ics = str(dt).replace("-", "")
+                ics += (
+                    "BEGIN:VEVENT\n"
+                    f"SUMMARY:Lavaggio {r['Cliente']}\n"
+                    f"DTSTART:{data_ics}T080000\n"
+                    f"DTEND:{data_ics}T090000\n"
+                    "END:VEVENT\n"
+                )
+
+        ics += "END:VCALENDAR"
+
+        if st.download_button("Scarica .ics", ics, "lavaggi.ics", disabled=not can_send_comms):
+            for i in conf.index:
+                salva_sheet(
+                    i,
+                    {
+                        "EventoCalendarioCreato": "SI",
+                        "DataEventoCreato": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                    },
+                )
+            registra_log("Esporta calendario", "", f"Eventi esportati: {len(conf)}")
+            st.success("Eventi segnati come esportati.")
+
+
+# ==========================================================
+# 12. GESTIONE UTENTI
+# ==========================================================
+elif pagina == "Gestione Utenti":
+    st.title("👤 Gestione Utenti")
+
+    if not is_admin:
+        st.warning("Accesso riservato agli amministratori.")
+        st.stop()
+
+    utenti = carica_utenti()
+
+    if utenti.empty:
+        st.warning("Nessun utente trovato.")
+    else:
+        st.dataframe(
+            utenti[["username", "ruolo"]],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    st.divider()
+    st.markdown("### Nuovo utente / modifica utente")
+
+    lista_utenti = ["Nuovo utente"]
+
+    if not utenti.empty:
+        lista_utenti += utenti["username"].tolist()
+
+    scelta = st.selectbox("Seleziona utente", lista_utenti)
+
+    if scelta == "Nuovo utente":
+        username = st.text_input("Username")
+        ruolo = st.selectbox("Ruolo", ["user", "supervisor", "admin"])
+        password = st.text_input("Password", type="password")
+        conferma = st.text_input("Conferma password", type="password")
+
+        if st.button("➕ CREA UTENTE", type="primary"):
+            if password != conferma:
+                st.error("Le password non coincidono.")
+            elif salva_utente(username, password, ruolo):
+                st.success("Utente creato.")
+                st.rerun()
+
+    else:
+        record = utenti[utenti["username"] == scelta].iloc[0]
+        username = st.text_input("Username", record["username"], disabled=True)
+        ruolo_corrente = record["ruolo"] if record["ruolo"] in ["user", "supervisor", "admin"] else "user"
+
+        ruolo = st.selectbox(
+            "Ruolo",
+            ["user", "supervisor", "admin"],
+            index=["user", "supervisor", "admin"].index(ruolo_corrente),
+        )
+
+        st.info("Lascia vuota la password se vuoi modificare solo il ruolo.")
+
+        nuova_password = st.text_input("Nuova password", type="password")
+        conferma_password = st.text_input("Conferma nuova password", type="password")
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            if st.button("💾 SALVA MODIFICHE", type="primary"):
+                if nuova_password and nuova_password != conferma_password:
+                    st.error("Le password non coincidono.")
+                elif salva_utente(username, nuova_password, ruolo):
+                    st.success("Utente aggiornato.")
+                    st.rerun()
+
+        with c2:
+            if st.button("🗑️ ELIMINA UTENTE"):
+                if elimina_utente(username):
+                    st.success("Utente eliminato.")
+                    st.rerun()
+
+
+# ==========================================================
+# 13. LOG
+# ==========================================================
+elif pagina == "Log":
+    st.title("🧾 Log Operativo")
+
+    if not is_admin:
+        st.warning("Accesso riservato agli amministratori.")
+        st.stop()
+
+    df_log = carica_log_sheet()
+
+    if df_log.empty:
+        st.info("Nessun log disponibile.")
+    else:
+        f1, f2, f3 = st.columns([1, 1, 1])
+
+        clienti_log = ["Tutti"] + sorted(
+            [c for c in df_log["Cliente"].astype(str).str.strip().unique().tolist() if c],
+            key=str.upper,
+        )
+        cliente_sel = f1.selectbox("Cliente", clienti_log)
+        azioni_log = ["Tutte"] + sorted(
+            [a for a in df_log["Azione"].astype(str).str.strip().unique().tolist() if a],
+            key=str.upper,
+        )
+        azione_sel = f2.selectbox("Azione", azioni_log)
+        ordina_per = f3.selectbox("Ordina per", ["Data più recente", "Data più vecchia", "Cliente A-Z", "Cliente Z-A"])
+
+        df_log_view = df_log.copy()
+
+        if cliente_sel != "Tutti":
+            df_log_view = df_log_view[df_log_view["Cliente"].astype(str).str.strip() == cliente_sel]
+
+        if azione_sel != "Tutte":
+            df_log_view = df_log_view[df_log_view["Azione"].astype(str).str.strip() == azione_sel]
+
+        if ordina_per == "Data più recente":
+            df_log_view = df_log_view.sort_values(by="DataOra_DT", ascending=False, na_position="last")
+        elif ordina_per == "Data più vecchia":
+            df_log_view = df_log_view.sort_values(by="DataOra_DT", ascending=True, na_position="last")
+        elif ordina_per == "Cliente A-Z":
+            df_log_view = df_log_view.sort_values(by="Cliente", key=lambda s: s.astype(str).str.upper())
+        else:
+            df_log_view = df_log_view.sort_values(by="Cliente", ascending=False, key=lambda s: s.astype(str).str.upper())
+
+        st.write(f"Record visualizzati: **{len(df_log_view)}**")
+        st.dataframe(
+            df_log_view[["DataOra", "Utente", "Azione", "Cliente", "Dettaglio"]],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+
+# ==========================================================
+# 14. IMPOSTAZIONI
+# ==========================================================
+elif pagina == "Impostazioni":
+    st.title("⚙️ Diagnostica")
+
+    st.write(f"Utente: **{st.session_state.utente or 'ospite'}**")
+    st.write(f"Ruolo: **{st.session_state.ruolo}**")
+    st.write(f"Foglio lavaggi: **{FOGLIO_LAVAGGI}**")
+    st.write(f"Foglio utenti: **{FOGLIO_UTENTI}**")
+    st.write(f"Foglio modelli: **{FOGLIO_MODELLI}**")
+    st.write(f"Foglio log: **{FOGLIO_LOG}**")
+
+    st.dataframe(df, use_container_width=True)
